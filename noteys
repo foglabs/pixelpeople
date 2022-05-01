@@ -1,0 +1,73 @@
+scaling rules for increasing num ppl
+generalize relationship between colors to freq stuff for synthesis
+pix appear as grid but just consider order (order joined) for pattern
+when impulse received start playing tone according to current total pattern
+tone should smooth glide over to new pattern's tone when pattern changes
+
+base freqs..?
+---
+red  
+orange
+yellow
+green
+blue
+'indigo'
+violet
+
+
+1 pix - pattern is one note
+2 pix - two notes etc.
+
+
+
+
+
+user
+  choose color of pixel
+  add more pixel?
+  tap to start impulse
+
+  change your place in order? up/down
+
+
+
+
+
+
+on connection
+  give client id
+  initialize color
+
+
+in server
+  store current pixel 
+
+
+
+
+
+
+
+impll
+  color passed into pixel to display
+  colors used to determine frequency of playednote
+  function to play notes from current pixel sequence
+    plays various notes over time according to current color configuration, then repeats until pixel color change
+
+  note class that creates osc with freq + gain, fades up and down gain with adsr args
+  
+
+
+
+
+
+in order to have sync
+  react app adds/removes dom elements
+
+
+
+start seq in web worker
+  just running
+
+
+use dom elements to represent notes in sequencer
