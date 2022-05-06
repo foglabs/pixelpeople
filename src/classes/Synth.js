@@ -25,6 +25,9 @@ class Synth {
     this.frequency = frequency
     this.playing = false
     this.stop()
+
+
+    this.id = new Date().getTime() + Math.random().toString(16).slice(2)
   }
 
   rampToFrequency(frequency, slideTime){

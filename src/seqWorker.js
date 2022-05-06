@@ -72,7 +72,7 @@ export default () => {
       this.timer.start()
 
       // how long is one step in ms
-      this.stepTime = 800
+      this.stepTime = 200
 
       this.globalStep = 0
       this.trackLength = 8
@@ -111,8 +111,11 @@ export default () => {
       this.tracks.push([false,false,false,false,false,false,false,false])
     }
 
+    removeTrack(index){
+      this.tracks.splice(index,1)
+    }
+
     changeNote(note){
-      console.log( 'hey fuckface', note )
       this.tracks[note.track][note.step] = note.enable
     }
 
@@ -159,7 +162,13 @@ export default () => {
       sequencer.changeNote(action.data.changeNote)
     } else if(action.data.addTrack){
       sequencer.addTrack()
+    } else if(action.data.removeTrack){
+      sequencer.removeTrack(action.data.removeTrack.index)
     }
+    //  else if(action.data.ensureNumTracks){
+    //   let numTracks = action.data.ensureNumTracks.numTracks
+    //   if(sequencer.tracks.length > numTracks){}
+    // }
   }
 }
 
