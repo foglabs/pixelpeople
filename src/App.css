@@ -31,4 +31,23 @@
 .stop{
   background-color: #f00;
   color: #b00;
+
+
+}
+
+.sequencer-container {
+  width: 64vw;
+}
+.sequencer-button {
+  border: 1px solid white;
+  width: 2vw;
+  height: 2vh;
+}
+
+.enable {
+  color: #0f0;
+}
+
+.disable {
+  color: #f00;
 }

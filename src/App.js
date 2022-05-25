@@ -2,9 +2,11 @@ import logo from "./logo.svg";
 import "./App.css";
 import React, { Component, useEffect } from "react"
 
+
 import Pixel from "./components/Pixel.js"
 import SoundShow from "./components/SoundShow.js"
 import Synth from "./classes/Synth.js"
+import MasterSequencer from "./classes/MasterSequencer.js"
 
 
 import WorkerBuilder from "./wb.js"
@@ -15,14 +17,20 @@ class App extends Component {
   constructor(props){
     super(props)
 
-    this.sequencerTrackLength = 8
-    this.defaultSynthGain = 0.1
+    this.sequencerTrackLength = 64
 
     this.state = {
+      tempo: 120,
+      numPix: 4,
       pixels: [],
       synths: [],
-      playing: false
+      playing: false,
+      masterSequencerSteps: new Array(this.sequencerTrackLength).fill(true)
     }
+
+    this.toggleMasterSequencerStep = this.toggleMasterSequencerStep.bind(this)
+    this.addPixel = this.addPixel.bind(this)
+    this.removePixel = this.removePixel.bind(this)
   }
 
   componentDidMount(props){
@@ -43,34 +51,45 @@ class App extends Component {
           // console.log("Message from sequencer", action.data);
           if(action.data.playSynth){
             // play synth now, since seq said so
-            
 
             // console.log( 'playing synth', action.data.playSynth.index )
             this.state.synths[action.data.playSynth.index].play()
           }
-
         }
       }
 
       // testing, change pixels every 8s I guess
-      setInterval(() => {
-        if(this.state.playing){
+      // setInterval(() => {
+      //   if(this.state.playing){
 
-          this.setState({pixels: this.getPixels()}, () => {
-            this.updateSounds()
-            
-          })  
-        }
-        
-      }, 3200)
+      //     // get rid of old pixels
+      //     this.setState({pixels: []}, () => {
+
+      //       // get/generate new ones
+      //       this.setState({pixels: this.getPixels()}, () => {
+      //         // change synths
+      //         this.updateSounds()
+      //       })
+      //     })
+      //   }
+      // }, 5120)
+
+
+
+
     })
   }
 
-  addPixel(color, gain){
-    return {
-      color: color,
-      gain: gain
-    }
+  toggleMasterSequencerStep(step){
+    let steps  = [...this.state.masterSequencerSteps];
+    let newStepVal = !steps[step]
+
+    console.log(step, ' step is now ', newStepVal )
+    steps[step] = newStepVal
+    this.setState({masterSequencerSteps: steps})
+    // let newMasterSequencerSteps = [...masterSequencerSteps]
+    // newMasterSequencerSteps[step] = !masterSequencerSteps[step]
+    // setMasterSequencerSteps(newMasterSequencerSteps)
   }
 
   startAudioContext(){
@@ -82,6 +101,7 @@ class App extends Component {
   }
 
   createSynth(index, gain, wave, freq, attk, hold, rels){
+    console.log( 'create synth ', index )
     // let freq = this.colorNameToFreq(color)
     let synth = new Synth(this.audioContext, this.gainNode, gain, wave, freq, attk, hold, rels)
 
@@ -125,6 +145,42 @@ class App extends Component {
     }
   }
 
+  colorNameToInt(colorName){
+   if(colorName == "red"){
+      return 0
+    } else if(colorName == "orange"){
+      return 1
+    } else if(colorName == "yellow"){
+      return 2
+    } else if(colorName == "green"){
+      return 3
+    } else if(colorName == "blue"){
+      return 4
+    } else if(colorName == "indigo"){
+      return 5
+    } else if(colorName == "violet"){
+      return 6
+    } 
+  }
+
+  intToColorName(int){
+   if(int == 0){
+      return "red"
+    } else if(int == 1){
+      return "orange"
+    } else if(int == 2){
+      return "yellow"
+    } else if(int == 3){
+      return "green"
+    } else if(int == 4){
+      return "blue"
+    } else if(int == 5){
+      return "indigo"
+    } else if(int == 6){
+      return "violet"
+    } 
+  }
+
   randomColor(){
     return ["red","orange","yellow","green","blue","indigo","violet"].sort(() => Math.random() - 0.5)[0]
   }
@@ -136,7 +192,15 @@ class App extends Component {
   randomizeSequencerTrack(trackIndex){
     let enable
     for(var stepIndex=0; stepIndex<this.sequencerTrackLength; stepIndex++){
-      enable = Math.random() > 0.5 ? true : false
+
+      console.log( 'MASSEQ WAS ', this.state.masterSequencerSteps[stepIndex] )
+      if( this.state.masterSequencerSteps[stepIndex] ){
+        enable = Math.random() > 0.5 ? true : false
+        // console.log( stepIndex, 'was enabled' )
+      } else {
+        enable = false
+        // console.log( stepIndex, 'was disabled' )
+      }
       seqWorker.postMessage({changeNote: {track: trackIndex, step: stepIndex, enable: enable}})
     }
   }
@@ -145,14 +209,27 @@ class App extends Component {
     let newPix = []
     for(var i=0; i<num; i++){
       // need new reference for each pix
-      var pix = {}
-      pix.color = this.randomColor()
-      pix.gain = 0.4
-      pix.clientId = Math.floor( Math.random() * 100 )
+      let pix = this.newPixel()
       newPix.push(pix)
     }
 
     return newPix
+  }
+
+  addPixel(color){
+    let newPix = this.newPixel(color)
+    this.setState(prevState => ({pixels: [...prevState.pixels, newPix] }), () => {
+
+      this.updateSounds()
+    } )
+  }
+
+  removePixel(index){
+    let pixels = [...this.state.pixels]
+    pixels.splice( index, 1 )
+    this.setState({pixels: pixels}, () => {
+      this.updateSounds()
+    })
   }
 
   getPixels(){
@@ -163,17 +240,47 @@ class App extends Component {
     //   {clientId: "def", color: "yellow", gain: 0.5},
     //   {clientId: "ghi", color: "indigo", gain: 0.5}
     // ]
-    return this.addRandomPixels(4)
+    
+    // return this.addRandomPixels(this.state.numPix)
+    return []
   }
 
   pixNoteLength(){
     return 2000
   }
 
+  synthGain(){
+    // lower gain wiht more pix
+    // return 0.1 / (this.state.pixels.length * 10)
+    // let val = -(Math.pow(this.state.pixels.length, 2)/100000) + 0.1
+    let val = -(7000 * this.state.pixels.length + Math.pow(this.state.pixels.length, 3)/8000000) + 0.1
+    // return Math.max(val, 0.000001)
+    return val > 0 ? val : 0.000000000000000001
+  }
+
   soundPatternLength(){
     // do tempo or whatever later
     // each note is 4 seconds
     return this.state.pixels.length * this.pixNoteLength()
+  }
+
+  changeTempo(newTempo){
+    this.setState({tempo: newTempo}, () => {
+      seqWorker.postMessage({changeTempo: newTempo})
+    })
+  }
+
+  newPixel(color=null){
+    var pix = {}
+    pix.color = color || this.randomColor()
+    pix.gain = 0.4
+    pix.clientId = Math.floor( Math.random() * 100 )
+    return pix
+  }
+
+  changeNumPix(newNum){
+    newNum = newNum > 64 ? 64 : newNum
+    this.setState({numPix: newNum}) 
   }
 
   // synth utilities
@@ -193,10 +300,9 @@ class App extends Component {
         synth.update( this.colorNameToFreq(pixel.color) )
       } else {
         // new synth
-        synth = this.createSynth(index, pixel.gain, this.randomWaveform(), this.colorNameToFreq(pixel.color), 0.2, this.defaultSynthGain, 0.2)
+        synth = this.createSynth(index, pixel.gain, this.randomWaveform(), this.colorNameToFreq(pixel.color), 0.2, this.synthGain(), 0.2)
         // same order as 
         synth.index = index
-        // seqWorker.postMessage({addTrack: true})
       }
 
       // new or old synth, keep id
@@ -207,15 +313,14 @@ class App extends Component {
     })
 
     for(var i=0; i<this.state.synths.length; i++){
-      console.log( 'find newsynthid result ',keepSynthIds.indexOf(this.state.synths[i].id) )
       if( keepSynthIds.indexOf(this.state.synths[i].id) === -1 ){
         // if this synth is not in new ids, stop it so it dies when we lose its reference
         this.state.synths[i].hardStop()
       }
     }
 
-    let patternSounds = this.createPatternSounds(this.state.pixels)
-
+    // let patternSounds = this.createPatternSounds(this.state.pixels)
+    let patternSounds = []
 
     // current state of pixels tells us the length of nonpattsounds
     if(patternSounds.length > 0){
@@ -231,19 +336,16 @@ class App extends Component {
     this.setState({synths: sounds}, () => {
       let newNumSynths = this.state.synths.length
       var numToChange = Math.abs(oldNumSynths - newNumSynths)
-      console.log( 'oldNumSynths', oldNumSynths, newNumSynths, numToChange )
 
       for(var i=0; i<numToChange; i++){
         if(oldNumSynths > newNumSynths){
           // remove a track
-          console.log( 'REMOVE' )
           seqWorker.postMessage({removeTrack: {index: oldNumSynths-numToChange} })
         } else if(newNumSynths > oldNumSynths){
-          console.log( 'ADD' )
           seqWorker.postMessage({addTrack: true})
         }
-
       }
+
 
       for(var i=0; i<this.state.synths.length; i++){
         // color scheme sequence determinations instead of this
@@ -253,9 +355,33 @@ class App extends Component {
     })
   }
 
-  checkConsec(array, startingIndex, testVal){
+  shuffle(array) {
+  var tmp, current, top = array.length
+  if(top) while(--top) {
+    current = Math.floor(Math.random() * (top + 1))
+    tmp = array[current]
+    array[current] = array[top]
+    array[top] = tmp
+  }
+  return array
+}
+
+  // checkConsec(array, startingIndex, testVal){
+  //   let consecCount = 0
+  //   for(var i=startingIndex; i<array.length; i++){
+  //     if(array[i] === testVal){
+  //       consecCount += 1
+  //     } else {
+  //       // exit early if no match found
+  //       break
+  //     }
+  //   }
+  //   return consecCount    
+  // }
+
+  checkRepeat(array, startingIndex, testVal, increment){
     let consecCount = 0
-    for(var i=startingIndex; i<array.length; i++){
+    for(var i=startingIndex; i<array.length; i+=increment){
       if(array[i] === testVal){
         consecCount += 1
       } else {
@@ -279,7 +405,6 @@ class App extends Component {
     let patternSounds = []
 
     let skip = 0
-    // -1 because 
     for(var i=0; i<colorInts.length-1; i++){
       if(skip > 0){
         skip--
@@ -289,42 +414,36 @@ class App extends Component {
 
       // which color are we checking for pattern from
       let thisColor = colorInts[thisColorIndex]
-      let numberOfRepeats = 0
-      numberOfRepeats = this.checkConsec(colorInts, thisColorIndex+1, thisColor)
 
-      if(numberOfRepeats > 0){
-        // skip forward num repeats if found
-        skip = numberOfRepeats+1
+      for(var repeatLength=1; repeatLength < 2; repeatLength++){
+        let numberOfRepeats = 0
 
-        // add pattern sounds
-        for(var x=0; x<numberOfRepeats; x++){
-          let newSynth = this.createSynth(patternSoundIndex, pixels[thisColorIndex].gain, this.randomWaveform(), this.colorNameToFreq(pixels[thisColorIndex].color), 0.2, this.defaultSynthGain, 0.2)
-          patternSounds.push(newSynth)
-          patternSoundIndex++
-        }
+        // pass in colors, first one to check, color to check against, and how many to skip between matches
+        numberOfRepeats = this.checkRepeat(colorInts, thisColorIndex+repeatLength, thisColor, repeatLength)
+
+        if(numberOfRepeats > 0){
+          // skip forward num repeats*repeatlength if found, since we already checked em
+          skip = (numberOfRepeats*repeatLength)+1
+
+          // add pattern sounds
+          for(var x=0; x<numberOfRepeats; x++){
+
+            // frequency is 
+            let frequency = this.colorNameToFreq(pixels[thisColorIndex].color) * repeatLength
+
+            let newSynth = this.createSynth(patternSoundIndex, pixels[thisColorIndex].gain, this.randomWaveform(), frequency, 0.2, this.synthGain(), 0.2)
+            patternSounds.push(newSynth)
+            patternSoundIndex++
+          }
+        }  
+
+        console.log('starting with color ', this.intToColorName(thisColor), ' number of ', repeatLength, ' pix repeats is ', numberOfRepeats )
+
       }
-      console.log(thisColor, ' number consecutive is ', numberOfRepeats )
+      
     }
 
     return patternSounds
-  }
-
-  colorNameToInt(colorName){
-   if(colorName == "red"){
-      return 0
-    } else if(colorName == "orange"){
-      return 1
-    } else if(colorName == "yellow"){
-      return 2
-    } else if(colorName == "green"){
-      return 3
-    } else if(colorName == "blue"){
-      return 4
-    } else if(colorName == "indigo"){
-      return 5
-    } else if(colorName == "violet"){
-      return 6
-    } 
   }
 
   playSounds(){
@@ -349,16 +468,27 @@ class App extends Component {
 
     let pixels
     if(this.state.pixels){
-      pixels = this.state.pixels.map( (pixel) => { return <Pixel color={ this.colorNameToHex(pixel.color) } /> })
+      pixels = this.state.pixels.map( (pixel, index) => { return <Pixel onClick={ () => { this.removePixel(index) } } color={ this.colorNameToHex(pixel.color) } /> })
     }
+
+    let colorPalette = ["red","orange","yellow","green","blue","indigo","violet"].map( (color) => <Pixel color={ this.colorNameToHex(color) } onClick={ () => { this.addPixel(color) } } /> )
 
     return (
       <div className="container">
 
         <div className="user-controls-container">
+          <div className="pixels-container">
+            { colorPalette }
+          </div>
+
           <div onClick={ () => { this.playSounds() } } className="button play">PLAY</div>
           <div onClick={ () => { this.stopSounds() } } className="button stop">STOP</div>
           
+          <input onChange={ (e) => this.changeTempo(e.target.value) } type="text" name="tempo" value={ this.state.tempo } placeholder="tempo" />
+
+          <input onChange={ (e) => this.changeNumPix(e.target.value) } type="text" name="numPix" value={ this.state.numPix } placeholder="numPix" />
+
+          <MasterSequencer toggleMasterSequencerStep={ this.toggleMasterSequencerStep } steps={ this.state.masterSequencerSteps } />
         </div>
 
         <div className="soundshower-container">

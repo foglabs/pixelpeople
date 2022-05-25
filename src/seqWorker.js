@@ -66,16 +66,17 @@ export default () => {
   }
 
   class Sequencer {
-    constructor(something){
+    constructor(stepTime){
       this.transport = STOPPED
       this.timer = new Timer
       this.timer.start()
 
       // how long is one step in ms
-      this.stepTime = 200
+      this.stepTime = stepTime
 
       this.globalStep = 0
-      this.trackLength = 8
+      // how many steps per track
+      this.trackLength = 32
 
       this.tracks = []
       // this.tracks = [
@@ -107,8 +108,13 @@ export default () => {
       clearInterval( this.sequencerHeartbeat )
     }
 
+    changeTempo(tempo){
+      this.stepTime = tempo
+    }
+
     addTrack(){
-      this.tracks.push([false,false,false,false,false,false,false,false])
+      let newTrack = new Array(this.trackLength).fill(false)
+      this.tracks.push(newTrack)
     }
 
     removeTrack(index){
@@ -127,7 +133,7 @@ export default () => {
           if(this.tracks[i][this.globalStep]){
             // postMessage("PLAY NOTE Track " + i + "Note " + this.globalStep)
             // track and this.state.synths[index] are the same
-            console.log( 'PLAY IT' )
+            // console.log( 'PLAY IT' )
             postMessage({playSynth: {index: i}})
           }
         }
@@ -145,11 +151,12 @@ export default () => {
   const PLAYING = 1
 
   console.log( 'Welcome to sequcner worker!' )
-  var sequencer = new Sequencer()
+  // initial step length in ms
+  var sequencer = new Sequencer(120)
 
   // eslint-disable-next-line no-restricted-globals  
   self.onmessage = (action) => { 
-    postMessage("I did " + JSON.stringify(action.data))
+    // postMessage("I did " + JSON.stringify(action.data))
 
     if(action.data.play && sequencer.transport !== PLAYING ){
       sequencer.startPlaying()
@@ -164,6 +171,8 @@ export default () => {
       sequencer.addTrack()
     } else if(action.data.removeTrack){
       sequencer.removeTrack(action.data.removeTrack.index)
+    } else if(action.data.changeTempo){
+      sequencer.changeTempo(action.data.changeTempo)
     }
     //  else if(action.data.ensureNumTracks){
     //   let numTracks = action.data.ensureNumTracks.numTracks
