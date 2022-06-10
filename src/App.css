@@ -5,12 +5,9 @@
 
 .pixel {
   display: inline-block;
-  /*margin-top: 5vw;*/
-  /*margin-left: 5vw;*/
   width: 5vw;
   min-height: 5vw;
   height: 5vw;
-  /*background-color: #ff0;*/
 }
 
 
@@ -36,11 +33,11 @@
 }
 
 .sequencer-container {
-  width: 64vw;
+  width: 96vw;
 }
 .sequencer-button {
   border: 1px solid white;
-  width: 2vw;
+  width: 3vw;
   height: 2vh;
 }
 

@@ -71,3 +71,31 @@ start seq in web worker
 
 
 use dom elements to represent notes in sequencer
+
+
+
+
+
+random mode
+--
+gen numPix random pixels every randomInterval ms
+checkbox toggle
+click color selector to whitelist colors to be included in random
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

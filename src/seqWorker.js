@@ -71,6 +71,12 @@ export default () => {
       this.timer = new Timer
       this.timer.start()
 
+
+      this.randomizePixels = false
+      this.randomizePixelsInterval = 3600
+      this.randomizePixelsTimer = new Timer
+      this.randomizePixelsTimer.start()
+
       // how long is one step in ms
       this.stepTime = stepTime
 
@@ -112,6 +118,14 @@ export default () => {
       this.stepTime = tempo
     }
 
+    changeRandomizePixels(newRand){
+      this.randomizePixels = newRand
+    }
+
+    changeRandomizePixelsInterval(newInterval){
+      this.randomizePixelsInterval = newInterval
+    }
+
     addTrack(){
       let newTrack = new Array(this.trackLength).fill(false)
       this.tracks.push(newTrack)
@@ -138,10 +152,19 @@ export default () => {
           }
         }
 
-        console.log( 'Seconds go by...')
         this.globalStep++
         if(this.globalStep == this.trackLength){
           this.globalStep = 0
+        }
+      }
+
+      // random pixels if enabled...
+      if(this.randomizePixels){
+        if(this.randomizePixelsTimer.time() > this.randomizePixelsInterval){
+          console.log( 'time to randomize pixels!' )
+          this.randomizePixelsTimer.reset()
+          // randomize that shit!
+          postMessage({randomizePixels: true})
         }
       }
     }
@@ -172,7 +195,11 @@ export default () => {
     } else if(action.data.removeTrack){
       sequencer.removeTrack(action.data.removeTrack.index)
     } else if(action.data.changeTempo){
-      sequencer.changeTempo(action.data.changeTempo)
+      sequencer.changeTempo(action.data.changeTempo.value)
+    } else if(action.data.changeRandomizePixels){
+      sequencer.changeRandomizePixels(action.data.changeRandomizePixels.value)
+    } else if(action.data.changeRandomizePixelsInterval){
+      sequencer.changeRandomizePixelsInterval(action.data.changeRandomizePixelsInterval)
     }
     //  else if(action.data.ensureNumTracks){
     //   let numTracks = action.data.ensureNumTracks.numTracks
