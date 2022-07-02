@@ -145,7 +145,7 @@ export default () => {
 
         for(var i=0; i<this.tracks.length; i++){
           if(this.tracks[i][this.globalStep]){
-            // postMessage("PLAY NOTE Track " + i + "Note " + this.globalStep)
+            postMessage("PLAY NOTE Track " + i + "Note " + this.globalStep)
             // track and this.state.synths[index] are the same
             // console.log( 'PLAY IT' )
             postMessage({playSynth: {index: i}})

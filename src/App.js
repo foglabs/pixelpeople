@@ -24,6 +24,8 @@ class App extends Component {
       numPix: 0,
       pixels: [],
       synths: [],
+      // kind of stupid but easier to track v
+      synthsPlaying: [],
       playing: false,
       masterGain: 0.06,
       masterSequencerSteps: new Array(this.sequencerTrackLength).fill(true),
@@ -61,6 +63,7 @@ class App extends Component {
 
             // console.log( 'playing synth', action.data.playSynth.index )
             this.state.synths[action.data.playSynth.index].play()
+            this.updateSynthPlaying(true, action.data.playSynth.index)
           } else if(action.data.randomizePixels){
             if(this.state.playing){
               // get rid of old pixels
@@ -231,6 +234,12 @@ class App extends Component {
       }
       seqWorker.postMessage({changeNote: {track: trackIndex, step: stepIndex, enable: enable}})
     }
+  }
+
+  updateSynthPlaying(isPlaying, index){
+    let sp  = [...this.state.synthsPlaying];
+    sp[index] = isPlaying
+    this.setState({synthsPlaying: sp})
   }
 
   addRandomPixels(num){
@@ -405,6 +414,7 @@ class App extends Component {
       numEachColor[ pixels[i].color ]++
     }
 
+    let foundScheme = false
     var sortedColors = Object.keys(numEachColor).filter( (color) => { return numEachColor[color] > 0 } ).sort( (val1, val2) => { return numEachColor[val1] < numEachColor[val2] } )
 
     // color wheel distances, use this to determine color relationship
@@ -421,6 +431,7 @@ class App extends Component {
       }
 
       if(triadMatches >= 2){
+        foundScheme = true
         console.log( 'triad bitch' )
         // // do the triad thing
 
@@ -450,6 +461,7 @@ class App extends Component {
             }
 
           } else {
+
             steps = this.state.masterSequencerSteps
           }
           
@@ -457,7 +469,12 @@ class App extends Component {
         }
         break
       }
-    }    
+    }
+
+    if(!foundScheme){
+      // if no scheme, just regular play
+      this.updateSequencerTracks()
+    }
   }
 
 
@@ -577,8 +594,8 @@ class App extends Component {
 
   render(){
     let soundShows
-    if(this.state.synths){
-      // soundShows = this.state.synths.map( (synth) => { return <SoundShow playing={ synth.playing } soundLength={ synth.noteLength() * 1000 } /> })
+    if(this.state.synthsPlaying){
+      soundShows = this.state.synthsPlaying.map( (isPlaying) => { return <SoundShow playing={ isPlaying } /> })
     }
 
     let pixels

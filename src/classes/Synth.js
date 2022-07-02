@@ -23,7 +23,6 @@ class Synth {
     this.oscillator.start()
 
     this.frequency = frequency
-    this.playing = false
     this.stop()
 
 
@@ -56,7 +55,6 @@ class Synth {
     this.release()
     this.setFrequency(this.frequency)
 
-    // this.playing = true
     // // show sounds while playing
     // this.noteIsPlaying = setTimeout( () => {
     //   // note is done playing

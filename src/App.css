@@ -12,8 +12,23 @@
 
 
 .soundshower-container {
-
+  /*background-color: #ff0;*/
 }
+
+.sound-show {
+  display: inline-block;
+  vertical-align: middle;
+  width: 2vw;
+  height: 2vw;
+  margin-left: 4vw;
+  overflow: hidden;
+  border: 1px solid black;
+}
+
+.sound-show.playing {
+  background-color: #0f0;
+}
+
 
 .button {
   width: 10vw;
