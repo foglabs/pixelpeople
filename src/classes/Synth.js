@@ -61,42 +61,60 @@ class Synth {
     //   console.log( 'its false' )
     //   this.playing = false
     // }, 10000 )
+
+    this.playing = true
+    this.startTimer()
   }
 
-  playRepeat(repeatLength, delay){
+  startTimer(){
+    this.timer = setTimeout( () => {
+      this.playing = false
+      this.stopTimer()
+      // console.log( 'stupid!', this.noteLength() )
+    }, 60 )  
+  }
 
-    this.delay = setTimeout( () => {
-      this.play()
-      this.randomNoteLength()
+  stopTimer(){
+    clearTimeout(this.timer)
+  }
+
+  // playRepeat(repeatLength, delay){
+
+  //   this.delay = setTimeout( () => {
+  //     this.play()
+  //     this.randomNoteLength()
   
-      this.timer = setInterval( () => {
-        if(this.enable){
-          this.stop()
+  //     this.timer = setInterval( () => {
+  //       if(this.enable){
+  //         this.stop()
 
-          // sets new atack etc
-          this.randomNoteLength()
+  //         // sets new atack etc
+  //         this.randomNoteLength()
 
-          this.play()
-        }
+  //         this.play()
+  //       }
         
-      }, repeatLength)
-    }, delay)
-  }
+  //     }, repeatLength)
+  //   }, delay)
+  // }
 
-  stopRepeat(){
-    if(this.timer){
-      clearInterval(this.timer)
-    }
-  }
+  // stopRepeat(){
+  //   if(this.timer){
+  //     clearInterval(this.timer)
+  //   }
+  // }
 
   stop(){
     this.setFrequency(0.0001)
     this.setGain(0)
     this.enable = false
+
+    this.stopTimer()
   }
 
   hardStop(){
     this.oscillator.stop()
+    this.stopTimer()
   }
 
   update(frequency){

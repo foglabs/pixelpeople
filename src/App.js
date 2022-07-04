@@ -20,7 +20,7 @@ class App extends Component {
     this.sequencerTrackLength = 32
 
     this.state = {
-      tempo: 220,
+      tempo: 60,
       numPix: 0,
       pixels: [],
       synths: [],
@@ -51,7 +51,7 @@ class App extends Component {
       this.updateSounds()
       this.setColorScheme(this.state.pixels)
 
-      seqWorker.postMessage({changeTempo: {value: this.state.tempo} })
+      this.changeTempo(this.state.tempo)
 
       // start seq
       // var sequencerWorker = new Worker(sequencer)
@@ -63,7 +63,6 @@ class App extends Component {
 
             // console.log( 'playing synth', action.data.playSynth.index )
             this.state.synths[action.data.playSynth.index].play()
-            this.updateSynthPlaying(true, action.data.playSynth.index)
           } else if(action.data.randomizePixels){
             if(this.state.playing){
               // get rid of old pixels
@@ -77,7 +76,6 @@ class App extends Component {
                 })
               })
             }
-
           }
         }
       }
@@ -88,6 +86,15 @@ class App extends Component {
           this.setColorScheme(this.state.pixels)
           // update from master sequencer
           // this.updateSequencerTracks()
+
+          let sp = []
+          for(var i=0; i<this.state.synths.length; i++){
+            // poll for are synths playing
+            // this.updateSynthPlaying(this.state.synths[i].playing, i)  
+            sp[i] = this.state.synths[i].playing
+          }
+
+          this.setState({synthsPlaying: sp})
         }
       }, 30)
     })
@@ -236,12 +243,6 @@ class App extends Component {
     }
   }
 
-  updateSynthPlaying(isPlaying, index){
-    let sp  = [...this.state.synthsPlaying];
-    sp[index] = isPlaying
-    this.setState({synthsPlaying: sp})
-  }
-
   addRandomPixels(num){
     let newPix = []
     for(var i=0; i<num; i++){
@@ -301,9 +302,14 @@ class App extends Component {
     return this.state.pixels.length * this.pixNoteLength()
   }
 
+  tempoToStepTime(tempo){
+    return Math.floor(15000/tempo)
+  }
+
   changeTempo(newTempo){
+    let stepTime = this.tempoToStepTime(newTempo)
     this.setState({tempo: newTempo}, () => {
-      seqWorker.postMessage({changeTempo: {value: newTempo} })
+      seqWorker.postMessage({changeTempo: {value: stepTime} })
     })
   }
 
