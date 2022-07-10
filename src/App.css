@@ -10,6 +10,29 @@
   height: 5vw;
 }
 
+.hide {
+  display: none;
+}
+
+.user-controls-container {
+  margin-top: 2em;
+  width: 100%;
+}
+
+span.knob-container {
+  display: inline-block;
+  /*enabling this breaks the click events on rc-knob*/
+  /*position: relative;*/
+  font-size: 0.6em;
+}
+
+span.knob-container label {
+  position: relative;
+  margin-left: 3.6em;
+  display: inline;
+  text-align: center;
+  top: 0;
+}
 
 .soundshower-container {
   /*background-color: #ff0;*/
@@ -36,7 +59,8 @@
 }
 
 .button {
-  width: 10vw;
+  display: inline-block;
+  width: 2.6em;
   font-size: 2em;
 }
 
@@ -48,6 +72,11 @@
 .stop{
   background-color: #f00;
   color: #b00;
+}
+
+.rand {
+  background-color: #00f;
+  color: #00b;
 }
 
 .sequencer-container {
@@ -65,4 +94,11 @@
 
 .disable {
   color: #f00;
+}
+
+
+.value {
+  /*font-family: 'Work Sans', sans-serif;*/
+  fill: #fc5a96;
+  font-size: 30px;
 }

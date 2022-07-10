@@ -1,8 +1,12 @@
 import logo from "./logo.svg";
 import "./App.css";
+// core
 import React, { Component, useEffect } from "react"
 
+// extra
+import { Knob, Arc, Pointer, Value } from 'rc-knob'
 
+// me
 import Pixel from "./components/Pixel.js"
 import SoundShow from "./components/SoundShow.js"
 import Synth from "./classes/Synth.js"
@@ -17,7 +21,7 @@ class App extends Component {
   constructor(props){
     super(props)
 
-    this.sequencerTrackLength = 32
+    this.sequencerTrackLength = 16
 
     this.state = {
       tempo: 60,
@@ -30,7 +34,8 @@ class App extends Component {
       masterGain: 0.06,
       masterSequencerSteps: new Array(this.sequencerTrackLength).fill(true),
       randomizePixels: false,
-      randomizePixelsInterval: 3600
+      randomizePixelsInterval: 3600,
+      noteLength: 0.3
     }
 
     this.toggleMasterSequencerStep = this.toggleMasterSequencerStep.bind(this)
@@ -223,15 +228,26 @@ class App extends Component {
   updateSequencerTracks(){
     for(var i=0; i<this.state.synths.length; i++){
       // color scheme sequence determinations instead of this
-      this.updateSequencerTrack(i, this.state.masterSequencerSteps)
+
+      // either pass option in to use index for which steps
+      // or separate method
+      // dont want to alter the array 
+      this.updateSequencerTrack(i, this.state.masterSequencerSteps, this.state.synths.length)
     }
   }
 
-  updateSequencerTrack(trackIndex, steps){
+  updateSequencerTrack(trackIndex, steps, numTracks=false){
+    // if numtracks passed in, then only play on seq steps that correspond to the synth's track index
+    let minStep, maxStep
+    if(numTracks){
+      minStep = Math.floor(steps.length/numTracks) * trackIndex
+      maxStep = ( Math.floor(steps.length/numTracks) * (trackIndex+1) ) - 1
+    }
+
     let enable
     for(var stepIndex=0; stepIndex<this.sequencerTrackLength; stepIndex++){
 
-      if( steps[stepIndex] ){
+      if( steps[stepIndex] && !numTracks || (stepIndex >= minStep && stepIndex <= maxStep)  ){
         // enable = Math.random() > 0.5 ? true : false
         enable = true
         // console.log( stepIndex, 'was enabled' )
@@ -283,10 +299,6 @@ class App extends Component {
     // return []
   }
 
-  pixNoteLength(){
-    return 2000
-  }
-
   synthGain(){
     // lower gain wiht more pix
     // return 0.1 / (this.state.pixels.length * 10)
@@ -294,12 +306,6 @@ class App extends Component {
     let val = -(7000 * this.state.pixels.length + Math.pow(this.state.pixels.length, 3)/8000000) + 0.1
     // return Math.max(val, 0.000001)
     return val > 0 ? val : 0.000000000000000001
-  }
-
-  soundPatternLength(){
-    // do tempo or whatever later
-    // each note is 4 seconds
-    return this.state.pixels.length * this.pixNoteLength()
   }
 
   tempoToStepTime(tempo){
@@ -323,6 +329,19 @@ class App extends Component {
     })
   }
 
+  changeNoteLength(length){
+    let synths = this.state.synths
+    let a,h,r
+    // let oldLength = this.state.noteLength
+    a = length * 0.10
+    h = length * 0.40
+    r = length * 0.20
+    synths.map( (synth) => {
+      synth.setNoteLength(a,h,r)
+    })
+    // this.setState({synths: synths})
+  }
+
   newPixel(color=null){
     var pix = {}
     pix.color = color || this.randomColor()
@@ -343,6 +362,12 @@ class App extends Component {
 
     let oldNumSynths = this.state.synths.length
 
+    let a,h,r
+    // let oldLength = this.state.noteLength
+    a = this.state.noteLength * 0.10
+    h = this.state.noteLength * 0.40
+    r = this.state.noteLength * 0.20
+
     // map through pixels making synth based on color and index
     let sounds = this.state.pixels.map( (pixel,index) => {
       var synth
@@ -353,7 +378,7 @@ class App extends Component {
         synth.update( this.colorNameToFreq(pixel.color) )
       } else {
         // new synth
-        synth = this.createSynth(index, pixel.gain, this.randomWaveform(), this.colorNameToFreq(pixel.color), 0.05, this.synthGain(), 0.05, pixel.color)
+        synth = this.createSynth(index, pixel.gain, this.randomWaveform(), this.colorNameToFreq(pixel.color), a, h, r, pixel.color)
         // same order as 
         synth.index = index
       }
@@ -588,7 +613,6 @@ class App extends Component {
     console.log( 'play the sounds' )
     seqWorker.postMessage({play: true})
     this.setState({playing: true})
-    // this.state.synths.map ( (synth) => { synth.playRepeat(this.soundPatternLength(), this.pixNoteLength()*synth.index) } )
   }
 
   stopSounds(){
@@ -599,6 +623,174 @@ class App extends Component {
   }
 
   render(){
+
+    let tempoKnob = (
+      <span className="knob-container">
+        <Knob 
+          size={100}
+          angleOffset={220}
+          angleRange={280}
+          min={0}
+          max={200}
+          onChange={value => this.changeTempo(value)}
+        >
+          <Arc 
+            arcWidth={5}
+            color="#888"
+            radius={47.5} 
+          />
+          <Pointer 
+            width={5}
+            radius={40}
+            type="circle"
+            color="#808"
+          />
+          <Value 
+            marginBottom={40} 
+            className="value" 
+          />
+
+        </Knob>
+        <label>
+          tempo
+        </label>
+      </span>
+    )
+
+    let masterGainKnob = (
+
+      <span className="knob-container">
+        <Knob 
+          size={100}
+          angleOffset={220}
+          angleRange={280}
+          min={0.001}
+          max={1}
+          onChange={value => this.changeMasterGain(value)}
+        >
+          <Arc 
+            arcWidth={5}
+            color="#888"
+            radius={47.5} 
+          />
+          <Pointer 
+            width={5}
+            radius={40}
+            type="circle"
+            color="#808"
+          />
+          <Value 
+            marginBottom={40} 
+            className="value" 
+          />
+
+        </Knob>
+        <label>
+          masterGain
+        </label>
+      </span>
+    )
+
+    let randomizePixelsIntervalKnob = (
+      <span className="knob-container">
+        <Knob 
+          size={100}
+          angleOffset={220}
+          angleRange={280}
+          min={1}
+          max={8000}
+          onChange={value => this.changeRandomizePixelsInterval(value)}
+        >
+          <Arc 
+            arcWidth={5}
+            color="#888"
+            radius={47.5} 
+          />
+          <Pointer 
+            width={5}
+            radius={40}
+            type="circle"
+            color="#808"
+          />
+          <Value 
+            marginBottom={40} 
+            className="value" 
+          />
+
+        </Knob>
+        <label>
+          randomizePixelsInterval
+        </label>
+      </span>
+    )
+
+    let numPixKnob = (
+      <span className="knob-container">
+        <Knob 
+          size={100}
+          angleOffset={220}
+          angleRange={280}
+          min={0}
+          max={8}
+          onChange={value => this.changeNumPix(Math.floor(value))}
+        >
+          <Arc 
+            arcWidth={5}
+            color="#888"
+            radius={47.5} 
+          />
+          <Pointer 
+            width={5}
+            radius={40}
+            type="circle"
+            color="#808"
+          />
+          <Value 
+            marginBottom={40} 
+            className="value" 
+          />
+
+        </Knob>
+        <label>
+          numPix
+        </label>
+      </span>
+    )
+
+    let noteLengthKnob = (
+      <span className="knob-container">
+        <Knob 
+          size={100}
+          angleOffset={220}
+          angleRange={280}
+          min={0}
+          max={2}
+          onChange={value => this.changeNoteLength(value)}
+        >
+          <Arc 
+            arcWidth={5}
+            color="#888"
+            radius={47.5} 
+          />
+          <Pointer 
+            width={5}
+            radius={40}
+            type="circle"
+            color="#808"
+          />
+          <Value 
+            marginBottom={40} 
+            className="value"
+            decimalPlace={2}
+          />
+
+        </Knob>
+        <label>
+          noteLength
+        </label>
+      </span>
+    )
+
     let soundShows
     if(this.state.synthsPlaying){
       soundShows = this.state.synthsPlaying.map( (isPlaying) => { return <SoundShow playing={ isPlaying } /> })
@@ -614,7 +806,24 @@ class App extends Component {
     return (
       <div className="container">
 
+        <div className="pixels-container">
+          { colorPalette }
+        </div>
         <div className="user-controls-container">
+          { masterGainKnob }
+          { tempoKnob }
+          { randomizePixelsIntervalKnob }
+          { numPixKnob }
+          { noteLengthKnob }
+
+          <div onClick={ () => { this.playSounds() } } className="button play">PLAY</div>
+          <div onClick={ () => { this.stopSounds() } } className="button stop">STOP</div>
+          <div onClick={ () => { this.toggleRandomizePixels() } } className="button rand">RAND</div>
+
+          <MasterSequencer toggleMasterSequencerStep={ this.toggleMasterSequencerStep } steps={ this.state.masterSequencerSteps } />
+        </div>
+
+        <div className="hide user-controls-container">
           <div className="pixels-container">
             { colorPalette }
           </div>
@@ -635,6 +844,11 @@ class App extends Component {
           <label>
             randomizePixelsInterval
             <input onChange={ (e) => this.changeRandomizePixelsInterval(e.target.value) } type="text" name="randomizePixelsInterval" value={ this.state.randomizePixelsInterval } placeholder="tempo" />
+          </label>
+          
+          <label>
+            noteLength
+            <input onChange={ (e) => this.setNoteLength(e.target.value) } type="text" name="noteLength" value={ this.state.noteLength } placeholder="tempo" />
           </label>
 
           <label>

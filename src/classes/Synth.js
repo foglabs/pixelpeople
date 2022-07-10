@@ -129,6 +129,12 @@ class Synth {
     this.releaseLength = Math.random(2)
   }
 
+  setNoteLength(a,h,r){
+    this.attackLength = a
+    this.holdLength = h
+    this.releaseLength = r
+  }
+
   noteLength(){
     // seconds
     return this.attackLength + this.holdLength + this.releaseLength
@@ -139,10 +145,6 @@ class Synth {
     this.gainNode.gain.setValueAtTime(0, this.audioContext.currentTime)
     this.gainNode.gain.linearRampToValueAtTime(this.initialGain, this.audioContext.currentTime + this.attackLength)
   }
-
-  // hold(duration){
-  //   // ???
-  // }
   
   release(){
     let finishReleasing = this.noteLength()

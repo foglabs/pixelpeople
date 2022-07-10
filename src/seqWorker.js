@@ -82,7 +82,7 @@ export default () => {
 
       this.globalStep = 0
       // how many steps per track
-      this.trackLength = 32
+      this.trackLength = 16
 
       this.tracks = []
       // this.tracks = [
