@@ -247,7 +247,7 @@ class App extends Component {
     let enable
     for(var stepIndex=0; stepIndex<this.sequencerTrackLength; stepIndex++){
 
-      if( steps[stepIndex] && !numTracks || (stepIndex >= minStep && stepIndex <= maxStep)  ){
+      if( steps[stepIndex] && (!numTracks || (stepIndex >= minStep && stepIndex <= maxStep))  ){
         // enable = Math.random() > 0.5 ? true : false
         enable = true
         // console.log( stepIndex, 'was enabled' )
@@ -397,8 +397,8 @@ class App extends Component {
       }
     }
 
-    // let patternSounds = this.createPatternSounds(this.state.pixels)
-    let patternSounds = []
+    let patternSounds = this.createPatternSounds(this.state.pixels)
+    // let patternSounds = []
 
     // current state of pixels tells us the length of nonpattsounds
     if(patternSounds.length > 0){
@@ -625,7 +625,7 @@ class App extends Component {
   render(){
 
     let tempoKnob = (
-      <span className="knob-container">
+      <div className="user-control knob-container">
         <Knob 
           size={100}
           angleOffset={220}
@@ -654,12 +654,12 @@ class App extends Component {
         <label>
           tempo
         </label>
-      </span>
+      </div>
     )
 
     let masterGainKnob = (
 
-      <span className="knob-container">
+      <div className="user-control knob-container">
         <Knob 
           size={100}
           angleOffset={220}
@@ -682,17 +682,18 @@ class App extends Component {
           <Value 
             marginBottom={40} 
             className="value" 
+            decimalPlace={3}
           />
 
         </Knob>
         <label>
           masterGain
         </label>
-      </span>
+      </div>
     )
 
     let randomizePixelsIntervalKnob = (
-      <span className="knob-container">
+      <div className="user-control knob-container">
         <Knob 
           size={100}
           angleOffset={220}
@@ -721,17 +722,17 @@ class App extends Component {
         <label>
           randomizePixelsInterval
         </label>
-      </span>
+      </div>
     )
 
     let numPixKnob = (
-      <span className="knob-container">
+      <div className="user-control knob-container">
         <Knob 
           size={100}
           angleOffset={220}
           angleRange={280}
           min={0}
-          max={8}
+          max={32}
           onChange={value => this.changeNumPix(Math.floor(value))}
         >
           <Arc 
@@ -754,11 +755,11 @@ class App extends Component {
         <label>
           numPix
         </label>
-      </span>
+      </div>
     )
 
     let noteLengthKnob = (
-      <span className="knob-container">
+      <div className="user-control knob-container">
         <Knob 
           size={100}
           angleOffset={220}
@@ -788,7 +789,7 @@ class App extends Component {
         <label>
           noteLength
         </label>
-      </span>
+      </div>
     )
 
     let soundShows
@@ -816,12 +817,12 @@ class App extends Component {
           { numPixKnob }
           { noteLengthKnob }
 
-          <div onClick={ () => { this.playSounds() } } className="button play">PLAY</div>
-          <div onClick={ () => { this.stopSounds() } } className="button stop">STOP</div>
-          <div onClick={ () => { this.toggleRandomizePixels() } } className="button rand">RAND</div>
+          <div onClick={ () => { this.playSounds() } } className="user-control button play">PLAY</div>
+          <div onClick={ () => { this.stopSounds() } } className="user-control button stop">STOP</div>
+          <div onClick={ () => { this.toggleRandomizePixels() } } className="user-control button rand">RAND</div>
 
-          <MasterSequencer toggleMasterSequencerStep={ this.toggleMasterSequencerStep } steps={ this.state.masterSequencerSteps } />
         </div>
+          <MasterSequencer toggleMasterSequencerStep={ this.toggleMasterSequencerStep } steps={ this.state.masterSequencerSteps } />
 
         <div className="hide user-controls-container">
           <div className="pixels-container">
