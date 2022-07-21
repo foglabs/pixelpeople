@@ -118,6 +118,7 @@ class Synth {
   }
 
   update(frequency){
+    this.frequency = frequency
     this.rampToFrequency( frequency, 2 )
     // in case we need to change waveform or other stuff along with freq
     // console.log( 'duh', this.index, this.oscillator.frequency, frequency )

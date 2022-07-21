@@ -99,4 +99,50 @@ extract triad code into method that checks for x-colorwheel-length patterns
 
 
 
+2 2 distance matchesw -> primary/triad
+  turns every 3 on
+2 1 distance matches -> analagous
+  s
+
+1 3 distance match -> complementary
+  turns every 4 on
+
+
+
+right then left
+
+orange 1
+yellow 2
+  distance 1, distance 5
+
+yellow 2
+orange 1
+  distance 5, distance 1
+
+
+violet 5
+orange 1
+  distance 2, distance 4
+
+
+blue 4
+violet 5
+  
+
+
+Math.abs(i1-i2)
+
+
+
+
+add too many synths, goes WEEEEEOOOO
+  inreasing heartbeat time seems to help, but still eventually get to weoo with 20-30synths
+  maybe something with loop taking too long and missing ever setting freq?
+
+  can happen temporarily with many randPix but always resolves and clears when next rand comes
+    seems to be something related to click events on addPixels
+
+
+  happens after 10th pixel added?
+    resolves after 12th added??
 

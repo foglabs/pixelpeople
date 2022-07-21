@@ -11,6 +11,7 @@ import Pixel from "./components/Pixel.js"
 import SoundShow from "./components/SoundShow.js"
 import Synth from "./classes/Synth.js"
 import MasterSequencer from "./classes/MasterSequencer.js"
+import ColorScheme from "./classes/ColorScheme.js"
 
 
 import WorkerBuilder from "./wb.js"
@@ -31,11 +32,12 @@ class App extends Component {
       // kind of stupid but easier to track v
       synthsPlaying: [],
       playing: false,
-      masterGain: 0.06,
+      masterGain: 0.035,
       masterSequencerSteps: new Array(this.sequencerTrackLength).fill(true),
       randomizePixels: false,
       randomizePixelsInterval: 3600,
-      noteLength: 0.3
+      noteLength: 0.3,
+      semitoneShift: 0
     }
 
     this.toggleMasterSequencerStep = this.toggleMasterSequencerStep.bind(this)
@@ -57,6 +59,7 @@ class App extends Component {
       this.setColorScheme(this.state.pixels)
 
       this.changeTempo(this.state.tempo)
+      this.playSounds()
 
       // start seq
       // var sequencerWorker = new Worker(sequencer)
@@ -153,19 +156,25 @@ class App extends Component {
     return synth
   }
 
+// 2^(s/12)*freq
+
+  shiftBySemitones(freq, semitones){
+    return Math.pow(2, (semitones/12) ) * freq
+  }
+
   colorNameToFreq(colorName){
    if(colorName == "red"){
-      return 523.2511
+      return this.shiftBySemitones(523.2511, this.state.semitoneShift)
     } else if(colorName == "orange"){
-      return 587.3295
+      return this.shiftBySemitones(587.3295, this.state.semitoneShift)
     } else if(colorName == "yellow"){
-      return 659.2551
+      return this.shiftBySemitones(659.2551, this.state.semitoneShift)
     } else if(colorName == "green"){
-      return 698.4565
+      return this.shiftBySemitones(698.4565, this.state.semitoneShift)
     } else if(colorName == "blue"){
-      return 783.9909
+      return this.shiftBySemitones(783.9909, this.state.semitoneShift)
     } else if(colorName == "violet"){
-      return 880.0000
+      return this.shiftBySemitones(880.0000, this.state.semitoneShift)
     } 
   }
 
@@ -319,11 +328,21 @@ class App extends Component {
     })
   }
 
+  changeSemitoneShift(newSemitoneShift){
+    this.setState({semitoneShift: newSemitoneShift}, () => {
+      let synths = this.state.synths
+      // change playing synths to new freq
+      for(var i=0; i<synths.length; i++){
+        synths[i].update( this.colorNameToFreq(synths[i].color) )
+      }
+
+    })
+  }
+
   changeMasterGain(newGain){
     
     this.setState({masterGain: newGain}, () => {
       if(newGain === 0 || newGain > 0){
-        console.log( 'setting msgain to ', newGain )
         this.gainNode.gain.exponentialRampToValueAtTime(newGain, this.audioContext.currentTime+0.08)
       }
     })
@@ -375,7 +394,7 @@ class App extends Component {
         // existing synth, ramp instead
 
         synth = this.state.synths[index]
-        synth.update( this.colorNameToFreq(pixel.color) )
+        synth.update( this.colorNameToFreq(synth.color) )
       } else {
         // new synth
         synth = this.createSynth(index, pixel.gain, this.randomWaveform(), this.colorNameToFreq(pixel.color), a, h, r, pixel.color)
@@ -397,8 +416,8 @@ class App extends Component {
       }
     }
 
-    let patternSounds = this.createPatternSounds(this.state.pixels)
-    // let patternSounds = []
+    // let patternSounds = this.createPatternSounds(this.state.pixels)
+    let patternSounds = []
 
     // current state of pixels tells us the length of nonpattsounds
     if(patternSounds.length > 0){
@@ -450,64 +469,88 @@ class App extends Component {
 
     // color wheel distances, use this to determine color relationship
 
+
+    let schemes = [new ColorScheme("triad"), new ColorScheme("analagous"), new ColorScheme("complementary")]
     for(var i=0; i<sortedColors.length; i++){
       // check each color
-      let triadMatches = 0
 
-      for(var x=i+1; x<sortedColors.length; x++){
-        // to see if it matches eith every other coolor
-        if(this.distanceBetweenColors(sortedColors[i], sortedColors[x]) == 2 ){
-          triadMatches += 1
+      let scheme
+      for(var x=0; x<schemes.length; x++){
+        // check for each color distance match
+        scheme = schemes[x]
+        // check each scheme
+
+        // get the colors in the scheme (if any)
+        let matchedColors = this.colorsByColorDistance(scheme.colorDistance, sortedColors, i, scheme.numMatchesNeeded)
+        if( matchedColors.length > 0 ){
+          schemes[x].matched = true
+          schemes[x].matchedColors = matchedColors
+          // stop looking for more schemes on this color
+          break
         }
       }
+    }
 
-      if(triadMatches >= 2){
-        foundScheme = true
-        console.log( 'triad bitch' )
-        // // do the triad thing
+    //  count these so we can evenly spread the non scheme ones over the whole seq
+    let numSchemePix = 0
+    for(var i=0; i<this.state.synths.length; i++){
+      let steps = []
 
-        // only color scheme seq the tracks corresponding to the pix in the color scheme
-        let colorSchemeColors = sortedColors.slice(0,3)
-        let steps = []
-        for(var i=0; i<this.state.synths.length; i++){
+      for(var x=0; x<schemes.length; x++){
 
-          let synthColorIndex = colorSchemeColors.indexOf(this.state.synths[i].color)
-            // console.log( 'hello',colorSchemeColors,this.state.synths[i].color )
+        let matchedColorIndex = schemes[x].matchedColors.indexOf(this.state.synths[i].color)
+        if(schemes[x].matched && matchedColorIndex > -1){
+          numSchemePix += 1
 
-          if(synthColorIndex > -1){
-            steps = []
-            let enable = false
-            for(var x=0; x<this.sequencerTrackLength; x++){
+          // only change this track if scheme matched and this colors in it
 
-              // every 6th (3 by 2), offset by color 1 2 or 3
-              // also just skip every other
-              if( ((x-synthColorIndex*2) % 6) == 0){
-              // if(x % 3 == 0){
+          for(var y=0; y<this.sequencerTrackLength; y++){
 
-                enable = true
-              } else {
-                enable = false
-              }
-              steps[x] = enable
+            // use which scheme color we're on to spread across seq
+            let enable
+            // if( ((y-matchedColorIndex*2) % schemes[x].skipLength()) == 0){
+            if( (y-1) % schemes[x].skipLength() == 0){
+
+              enable = true
+            } else {
+              enable = false
             }
-
-          } else {
-
-            steps = this.state.masterSequencerSteps
+            steps[y] = enable
           }
-          
-          this.updateSequencerTrack(i, steps)  
-        }
-        break
+        }   
+      }
+
+      if(steps.length > 0){
+       this.updateSequencerTrack(i, steps)
+      } else {
+        // set to master seq, spread playing evenly across non scheme pix
+        this.updateSequencerTrack(i, this.state.masterSequencerSteps, this.state.synths.length - numSchemePix)
       }
     }
 
-    if(!foundScheme){
-      // if no scheme, just regular play
-      this.updateSequencerTracks()
-    }
   }
 
+  colorsByColorDistance(colorDistance, sortedColors, startingColorIndex, numMatchesNeeded){
+    let triadMatches = 0
+    let schemeColors = [ sortedColors[startingColorIndex] ]
+
+    for(var x=0; x<sortedColors.length; x++){
+      // to see if it matches eith every other coolor
+      if(x != startingColorIndex && this.distanceBetweenColors(sortedColors[startingColorIndex], sortedColors[x]) == colorDistance ){
+        triadMatches += 1
+        // console.log( 'found scheme color', sortedColors[x], "matched", triadMatches, "looking for", numMatchesNeeded, "matches" )
+        schemeColors.push(sortedColors[x])
+      }
+
+      if(triadMatches >= numMatchesNeeded){
+        // console.log( 'hEY BITCH~!!!' )
+        // stop as soon as scheme match detected
+        return schemeColors
+      }
+    }
+
+    return []
+  }
 
   distanceBetweenColors(color1, color2){
     var colors = ["red","orange","yellow","green","blue","violet"]
@@ -515,7 +558,7 @@ class App extends Component {
     ci1 = colors.indexOf(color1)
     ci2 = colors.indexOf(color2)
     // check to left and right
-    return Math.min( Math.abs(ci1 - ci2), ( Math.abs(6-(ci2 + ci1)) ) )
+    return Math.min( Math.abs(ci1 - ci2), ( 6-Math.abs(ci1 - ci2) ) )
   }
 
   shuffle(array) {
@@ -600,7 +643,7 @@ class App extends Component {
           }
         }  
 
-        console.log('starting with color ', this.intToColorName(thisColor), ' number of ', repeatLength, ' pix repeats is ', numberOfRepeats )
+        // console.log('starting with color ', this.intToColorName(thisColor), ' number of ', repeatLength, ' pix repeats is ', numberOfRepeats )
 
       }
       
@@ -632,8 +675,15 @@ class App extends Component {
           angleRange={280}
           min={0}
           max={200}
+          value={this.state.tempo}
           onChange={value => this.changeTempo(value)}
         >
+          <circle
+            r="35"
+            cx="50"
+            cy="50"
+            fill="#eee"
+          />
           <Arc 
             arcWidth={5}
             color="#888"
@@ -666,8 +716,15 @@ class App extends Component {
           angleRange={280}
           min={0.001}
           max={1}
+          value={this.state.masterGain}
           onChange={value => this.changeMasterGain(value)}
         >
+          <circle
+            r="35"
+            cx="50"
+            cy="50"
+            fill="#eee"
+          />
           <Arc 
             arcWidth={5}
             color="#888"
@@ -684,6 +741,7 @@ class App extends Component {
             className="value" 
             decimalPlace={3}
           />
+
 
         </Knob>
         <label>
@@ -702,6 +760,12 @@ class App extends Component {
           max={8000}
           onChange={value => this.changeRandomizePixelsInterval(value)}
         >
+          <circle
+            r="35"
+            cx="50"
+            cy="50"
+            fill="#eee"
+          />
           <Arc 
             arcWidth={5}
             color="#888"
@@ -735,6 +799,12 @@ class App extends Component {
           max={32}
           onChange={value => this.changeNumPix(Math.floor(value))}
         >
+          <circle
+            r="35"
+            cx="50"
+            cy="50"
+            fill="#eee"
+          />
           <Arc 
             arcWidth={5}
             color="#888"
@@ -768,6 +838,12 @@ class App extends Component {
           max={2}
           onChange={value => this.changeNoteLength(value)}
         >
+          <circle
+            r="35"
+            cx="50"
+            cy="50"
+            fill="#eee"
+          />
           <Arc 
             arcWidth={5}
             color="#888"
@@ -792,6 +868,47 @@ class App extends Component {
       </div>
     )
 
+    let semitoneShiftKnob = (
+      <div className="user-control knob-container">
+        <Knob 
+          size={100}
+          angleOffset={220}
+          angleRange={280}
+          min={-24}
+          max={24}
+          steps={48}
+          snap={true}
+          onChange={value => this.changeSemitoneShift(Math.ceil(value))}
+          value={this.state.semitoneShift}
+        >
+          <circle
+            r="35"
+            cx="50"
+            cy="50"
+            fill="#eee"
+          />
+          <Arc 
+            arcWidth={5}
+            color="#888"
+            radius={47.5} 
+          />
+          <Pointer 
+            width={5}
+            radius={40}
+            type="circle"
+            color="#808"
+          />
+          <Value 
+            marginBottom={40} 
+            className="value"
+          />
+
+        </Knob>
+        <label>
+          semitoneShift
+        </label>
+      </div>
+    )
     let soundShows
     if(this.state.synthsPlaying){
       soundShows = this.state.synthsPlaying.map( (isPlaying) => { return <SoundShow playing={ isPlaying } /> })
@@ -816,6 +933,7 @@ class App extends Component {
           { randomizePixelsIntervalKnob }
           { numPixKnob }
           { noteLengthKnob }
+          { semitoneShiftKnob }
 
           <div onClick={ () => { this.playSounds() } } className="user-control button play">PLAY</div>
           <div onClick={ () => { this.stopSounds() } } className="user-control button stop">STOP</div>
@@ -863,6 +981,11 @@ class App extends Component {
           <label>
             numRandomPix
             <input onChange={ (e) => this.changeNumPix(e.target.value) } type="text" name="numPix" value={ this.state.numPix } placeholder="numPix" />
+          </label>
+
+          <label>
+            semitoneShift
+            <input onChange={ (e) => this.changeNumPix(e.target.value) } type="text" name="semitoneShift" value={ this.state.semitoneShift } placeholder="semitoneShift" />
           </label>
 
           <MasterSequencer toggleMasterSequencerStep={ this.toggleMasterSequencerStep } steps={ this.state.masterSequencerSteps } />
