@@ -18,11 +18,11 @@ class ColorScheme{
 
   skipLength(){
     if(this.name == "triad"){
-      return 1
-    } else if(this.name == "analagous"){
       return 2
+    } else if(this.name == "analagous"){
+      return 4
     } else if(this.name == "complementary"){
-      return 3
+      return 6
     }
   }
 }

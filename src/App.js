@@ -662,7 +662,9 @@ class App extends Component {
     console.log( 'stop the sounds' )
     // actually kills oscs..
     // this.state.synths.map ( (synth) => { synth.hardStop() } )
+
     seqWorker.postMessage({stop: true})
+    this.setState({playing: false})
   }
 
   render(){
@@ -911,7 +913,7 @@ class App extends Component {
     )
     let soundShows
     if(this.state.synthsPlaying){
-      soundShows = this.state.synthsPlaying.map( (isPlaying) => { return <SoundShow playing={ isPlaying } /> })
+      soundShows = this.state.synthsPlaying.map( (isPlaying, index) => { return <SoundShow color={ this.state.synths[index] ? this.state.synths[index].color : "#eee"  } playing={ isPlaying } /> })
     }
 
     let pixels
@@ -920,6 +922,21 @@ class App extends Component {
     }
 
     let colorPalette = ["red","orange","yellow","green","blue","violet"].map( (color) => <Pixel color={ this.colorNameToHex(color) } onClick={ () => { this.addPixel(color) } } /> )
+
+    let buttonClasses = "user-control button "
+    let playButtonClasses = buttonClasses + "play"
+    let stopButtonClasses = buttonClasses + "stop"
+    let randButtonClasses = buttonClasses + "rand"
+
+    if(this.state.playing){
+      playButtonClasses += " white-border"
+    } else {
+      stopButtonClasses += " white-border"
+    }
+
+    if(this.state.randomizePixels){
+      randButtonClasses += " white-border"
+    }
 
     return (
       <div className="container">
@@ -935,9 +952,11 @@ class App extends Component {
           { noteLengthKnob }
           { semitoneShiftKnob }
 
-          <div onClick={ () => { this.playSounds() } } className="user-control button play">PLAY</div>
-          <div onClick={ () => { this.stopSounds() } } className="user-control button stop">STOP</div>
-          <div onClick={ () => { this.toggleRandomizePixels() } } className="user-control button rand">RAND</div>
+
+
+          <div onClick={ () => { this.playSounds() } } className={playButtonClasses}>PLAY</div>
+          <div onClick={ () => { this.stopSounds() } } className={stopButtonClasses}>STOP</div>
+          <div onClick={ () => { this.toggleRandomizePixels() } }  className={randButtonClasses}>RAND</div>
 
         </div>
           <MasterSequencer toggleMasterSequencerStep={ this.toggleMasterSequencerStep } steps={ this.state.masterSequencerSteps } />

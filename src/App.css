@@ -22,7 +22,6 @@
 .user-control {
   overflow: hidden;
   text-align: center;
-  min-width:  12.5%;
   height: 8.33333vw;
 }
 
@@ -31,6 +30,7 @@ div.knob-container {
   /*enabling this breaks the click events on rc-knob*/
   /*position: relative;*/
   font-size: 0.6em;
+  min-width:  12.5%;
 }
 
 div.knob-container label {
@@ -61,15 +61,25 @@ div.knob-container label {
 }
 
 .sound-show.playing {
-  background-color: #0f0;
-  /*transition: background-color 0.3s;*/
-  width: 3.25%;
+  /*background-color: #0f0;*/
+  transition: background-color 0.05s;
+  /*width: 3.25%;*/
 }
 
 .button {
+  box-shadow: 0 0 0 5px black;
   text-align: center;
   display: inline-block;
   font-size: 2em;
+  width: 8.3%;  
+}
+
+.button.white-border {
+  box-shadow: 0 0 0 5px #fff;
+}
+
+.button:active {
+  box-shadow: 0 0 0 5px #fff;
 }
 
 .play {
@@ -94,6 +104,7 @@ div.knob-container label {
   border: 1px solid white;
   width: 6.25%;
   height: 2vh;
+  min-height: 20px;
 }
 
 .enable {
