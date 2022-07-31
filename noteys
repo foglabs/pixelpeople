@@ -146,3 +146,47 @@ add too many synths, goes WEEEEEOOOO
   happens after 10th pixel added?
     resolves after 12th added??
 
+
+
+
+
+
+
+no longer deleting patternsound, catching id (yay)
+  but still hardstopping it, because we're not getting existingpatternsound's synthid in keepsynthids
+  maybe restructure the 'findpatternsoundrepeats'
+
+  during findpatternsounds, we know which synthid is the one to be preseved, but keepsynthids is outside
+  dont want to further bulk up createThese
+
+
+
+*got pattern sound detection working correctly
+  *just need to make first pattern sound have 2x freq, right now its doing 1x
+
+
+HEY should be able to set whether randomizePixels removes existing
+
+
+
+
+
+new pix synth fails to create because existing patern synth is already at that synths[index]
+  need to preserve existing patt synth
+  but put it into newsynths AFTER new pix synth(s)
+  and reset its index prop (which should happen from being in newsynths anyway)
+
+  also have to make sure existingpattdetect code doesnt expect it to be at a particualr index
+  basically expect it in newsynths rather than searching through this.state.synths?
+
+
+
+deleting doesnt always work
+  with or without psounds enabled, leaves dead synths
+  visible on soundshow (stuck 'playing')
+  hardstupssed over and over again -> deleting isn't actually deleting in certain circums?
+  "Sir Cum"
+  possible losing sync between seq and synths?
+
+
+

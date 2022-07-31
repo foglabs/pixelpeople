@@ -71,6 +71,8 @@ export default () => {
       this.timer = new Timer
       this.timer.start()
 
+      this.debugTimer = new Timer
+      this.debugTimer.start()
 
       this.randomizePixels = false
       this.randomizePixelsInterval = 3600
@@ -140,12 +142,20 @@ export default () => {
     }
 
     playLoop(){
+      // if(this.debugTimer.time() > 4000){
+      //   this.debugTimer.reset()
+      //   console.log( 'Num Sequencers: ', this.tracks.length )
+      //   for(var i=0; i<this.tracks.length; i++){
+      //     console.log( 'Steps for Seq ', i, ": ", this.tracks[i])
+      //   }
+      // }
+
       if(this.timer.time() > this.stepTime){
         this.timer.reset()
 
         for(var i=0; i<this.tracks.length; i++){
           if(this.tracks[i][this.globalStep]){
-            postMessage("PLAY NOTE Track " + i + "Note " + this.globalStep)
+            // postMessage("PLAY NOTE Track " + i + "Note " + this.globalStep)
             // track and this.state.synths[index] are the same
             // console.log( 'PLAY IT' )
             postMessage({playSynth: {index: i}})

@@ -25,7 +25,6 @@ class Synth {
     this.frequency = frequency
     this.stop()
 
-
     this.id = new Date().getTime() + Math.random().toString(16).slice(2)
   }
 
@@ -71,7 +70,7 @@ class Synth {
       this.playing = false
       this.stopTimer()
       // console.log( 'stupid!', this.noteLength() )
-    }, 60 )  
+    }, 80 )  
   }
 
   stopTimer(){
@@ -115,6 +114,7 @@ class Synth {
   hardStop(){
     this.oscillator.stop()
     this.stopTimer()
+    // this.playing = false
   }
 
   update(frequency){
