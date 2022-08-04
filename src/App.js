@@ -249,12 +249,12 @@ class App extends Component {
     }
   }
 
-  updateSequencerTrack(trackIndex, steps, numTracks=false){
+  updateSequencerTrack(trackIndex, steps, currentNonSchemePix=false, numTracks=false){
     // if numtracks passed in, then only play on seq steps that correspond to the synth's track index
     let minStep, maxStep
     if(numTracks){
-      minStep = Math.floor(steps.length/numTracks) * trackIndex
-      maxStep = ( Math.floor(steps.length/numTracks) * (trackIndex+1) ) - 1
+      minStep = Math.floor(steps.length/numTracks) * currentNonSchemePix
+      maxStep = ( Math.floor(steps.length/numTracks) * (currentNonSchemePix+1) ) - 1
     }
 
     let enable
@@ -563,44 +563,99 @@ class App extends Component {
     }
 
     //  count these so we can evenly spread the non scheme ones over the whole seq
-    let numSchemePix = 0
+    let numSchemePix = this.state.synths.filter( synth => schemes.some( scheme => scheme.matchedColors.includes(synth.color) ) ).length
+    let numNonSchemePix = this.state.synths.length - numSchemePix
+    // need to track which nonschemem pix because trackindex is no longer an indication of nonschemepix order (because schemepix can be anywhere in synths)
+    let currentNonSchemePix = 0
+
     for(var i=0; i<this.state.synths.length; i++){
+      // determine steps for each synth
       let steps = []
+
+      var numToPlay = 0
+
+      let isSchemePix = false
 
       for(var x=0; x<schemes.length; x++){
 
+        // regular scheme skpping numbres of steps defined in ColorScheme
+
         let matchedColorIndex = schemes[x].matchedColors.indexOf(this.state.synths[i].color)
         if(schemes[x].matched && matchedColorIndex > -1){
-          numSchemePix += 1
+          isSchemePix = true
+          if(true){
 
-          // console.log( 'I am schemin on scheme', x )
+            // add in more to play if scheme  was matched
+            numToPlay += schemes[x].numToPlay
+          } else {
 
-          // only change this track if scheme matched and this colors in it
 
-          for(var y=0; y<this.sequencerTrackLength; y++){
+            // console.log( 'I am schemin on scheme', x )
 
-            // use which scheme color we're on to spread across seq
-            let enable
-            // if( ((y-matchedColorIndex*2) % schemes[x].skipLength()) == 0){
-            if( (y-1) % schemes[x].skipLength() == 0){
+            // only change this track if scheme matched and this colors in it
 
-              enable = true
-            } else {
-              enable = false
+            for(var y=0; y<this.sequencerTrackLength; y++){
+
+              // use which scheme color we're on to spread across seq
+              let enable
+              // if( ((y-matchedColorIndex*2) % schemes[x].skipLength()) == 0){
+              if( (y-1) % schemes[x].skipLength() == 0){
+
+                enable = true
+              } else {
+                enable = false
+              }
+              steps[y] = enable
             }
-            steps[y] = enable
           }
-        }   
+        }  
+ 
+      }
+
+      if(numToPlay > 0){
+        let whichSchemesSkipValue = 0
+        let lastPlayedIndex = 0
+
+        for(var y=0; y<this.sequencerTrackLength; y++){
+          // use which scheme color we're on to spread across seq
+          let enable
+          // if( ((y-matchedColorIndex*2) % schemes[x].skipLength()) == 0){
+          if( (lastPlayedIndex - y) % schemes[whichSchemesSkipValue].skipValue == 0 ){ 
+            // if distance between last matched step and current step is a multiple of the current schemes skipvalue
+
+            enable = true
+            lastPlayedIndex = y
+          } else {
+            enable = false
+          }
+          steps[y] = enable
+
+          whichSchemesSkipValue++
+          if(whichSchemesSkipValue > 2){
+            // roll through the schemes using their skipvalues
+            whichSchemesSkipValue = 0
+          }
+        }
       }
 
       if(steps.length > 0){
         this.updateSequencerTrack(i, steps)
       } else {
         // set to master seq, spread playing evenly across non scheme pix
-        this.updateSequencerTrack(i, this.state.masterSequencerSteps, this.state.synths.length - numSchemePix)
+        this.updateSequencerTrack(i, this.state.masterSequencerSteps, currentNonSchemePix, numNonSchemePix)
+      }
+
+      if(!isSchemePix){
+        // we found another nonschem pix, increment spreader counter
+        currentNonSchemePix++
       }
     }
 
+  }
+
+  getStepsForSexyScheme(schemes, ){
+    // add up matched schemes to get total number steps to play on N
+    // play N steps by cycling through skpping each matched schemes skipValue until N met
   }
 
   colorsByColorDistance(colorDistance, sortedColors, startingColorIndex, numMatchesNeeded){
