@@ -108,7 +108,7 @@ class App extends Component {
           }
           this.setState({synthsPlaying: sp})
         }
-      }, 2)
+      }, 60)
     })
   }
 
