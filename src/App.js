@@ -576,17 +576,19 @@ class App extends Component {
 
       let isSchemePix = false
 
-      for(var x=0; x<schemes.length; x++){
+      let matchedSchemes = schemes.filter( scheme => scheme.matched )
+
+      for(var x=0; x<matchedSchemes.length; x++){
 
         // regular scheme skpping numbres of steps defined in ColorScheme
 
-        let matchedColorIndex = schemes[x].matchedColors.indexOf(this.state.synths[i].color)
-        if(schemes[x].matched && matchedColorIndex > -1){
+        let matchedColorIndex = matchedSchemes[x].matchedColors.indexOf(this.state.synths[i].color)
+        if(matchedColorIndex > -1){
           isSchemePix = true
           if(true){
 
             // add in more to play if scheme  was matched
-            numToPlay += schemes[x].numToPlay
+            numToPlay += matchedSchemes[x].numToPlay
           } else {
 
 
@@ -598,8 +600,8 @@ class App extends Component {
 
               // use which scheme color we're on to spread across seq
               let enable
-              // if( ((y-matchedColorIndex*2) % schemes[x].skipLength()) == 0){
-              if( (y-1) % schemes[x].skipLength() == 0){
+              // if( ((y-matchedColorIndex*2) % matchedSchemes[x].skipLength()) == 0){
+              if( (y-1) % matchedSchemes[x].skipLength() == 0){
 
                 enable = true
               } else {
@@ -613,28 +615,33 @@ class App extends Component {
       }
 
       if(numToPlay > 0){
-        let whichSchemesSkipValue = 0
+
+        let whichSchemesSkipValue = Math.floor(Math.random()*matchedSchemes.length)
+        // let whichSchemesSkipValue = 0
         let lastPlayedIndex = 0
 
         for(var y=0; y<this.sequencerTrackLength; y++){
           // use which scheme color we're on to spread across seq
           let enable
           // if( ((y-matchedColorIndex*2) % schemes[x].skipLength()) == 0){
-          if( (lastPlayedIndex - y) % schemes[whichSchemesSkipValue].skipValue == 0 ){ 
+
+          if( (lastPlayedIndex - y) % matchedSchemes[whichSchemesSkipValue].skipValue == 0 ){ 
             // if distance between last matched step and current step is a multiple of the current schemes skipvalue
 
             enable = true
             lastPlayedIndex = y
+
+            whichSchemesSkipValue++
+            if(whichSchemesSkipValue == matchedSchemes.length){
+              // roll through the schemes using their skipvalues
+              whichSchemesSkipValue = 0
+            }
           } else {
             enable = false
           }
           steps[y] = enable
 
-          whichSchemesSkipValue++
-          if(whichSchemesSkipValue > 2){
-            // roll through the schemes using their skipvalues
-            whichSchemesSkipValue = 0
-          }
+
         }
       }
 

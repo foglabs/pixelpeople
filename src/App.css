@@ -22,7 +22,7 @@
 .user-control {
   overflow: hidden;
   text-align: center;
-  height: 8.33333vw;
+  /*height: 8.33333vw;*/
 }
 
 div.knob-container {
@@ -30,7 +30,8 @@ div.knob-container {
   /*enabling this breaks the click events on rc-knob*/
   /*position: relative;*/
   font-size: 0.6em;
-  min-width:  12.5%;
+  margin-left: 1vw;
+  min-width:  11.5vw;
 }
 
 div.knob-container label {
@@ -71,7 +72,8 @@ div.knob-container label {
   text-align: center;
   display: inline-block;
   font-size: 2em;
-  width: 8.3%;  
+  width: 8.3vw;
+  height: 8.3vw;
 }
 
 .button.white-border {
