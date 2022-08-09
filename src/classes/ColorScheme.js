@@ -5,7 +5,7 @@ class ColorScheme{
     this.matchedColors = []
 
     if(this.name == "triad"){
-      this.colorDistance = 2
+      this.colorDistance = 4
       this.numMatchesNeeded = 2  
 
       // other way
@@ -19,7 +19,7 @@ class ColorScheme{
       this.numToPlay = 6
       this.skipValue = 4
     } else if(this.name == "complementary"){
-      this.colorDistance = 3
+      this.colorDistance = 6
       this.numMatchesNeeded = 1
 
       // other way

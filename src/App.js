@@ -13,10 +13,13 @@ import Synth from "./classes/Synth.js"
 import MasterSequencer from "./classes/MasterSequencer.js"
 import ColorScheme from "./classes/ColorScheme.js"
 
-
 import WorkerBuilder from "./wb.js"
 import SequencerWorker from "./seqWorker.js"
 var seqWorker = new WorkerBuilder(SequencerWorker)
+
+
+const COLORS = [ "red", "red-orange", "orange", "orange-yellow", "yellow", "yellow-green", "green", "green-blue", "blue", "blue-violet", "violet", "violet-red"]
+
 
 class App extends Component { 
   constructor(props){
@@ -59,6 +62,10 @@ class App extends Component {
       this.setColorScheme(this.state.pixels)
 
       this.changeTempo(this.state.tempo)
+      this.changeNoteLength(this.state.noteLength)
+      this.changeSemitoneShift(this.state.semitoneShift)
+      this.changeNumPix(this.state.numPix)
+      this.changeRandomizePixelsInterval(this.state.randomizePixelsInterval)
       this.playSounds()
 
       // start seq
@@ -166,71 +173,120 @@ class App extends Component {
   }
 
   colorNameToFreq(colorName){
-   if(colorName == "red"){
+    if(colorName == "red"){
       return this.shiftBySemitones(523.2511, this.state.semitoneShift)
-    } else if(colorName == "orange"){
+    } else if(colorName == "red-orange"){
       return this.shiftBySemitones(587.3295, this.state.semitoneShift)
-    } else if(colorName == "yellow"){
+    } else if(colorName == "orange"){
       return this.shiftBySemitones(659.2551, this.state.semitoneShift)
-    } else if(colorName == "green"){
+    } else if(colorName == "orange-yellow"){
       return this.shiftBySemitones(698.4565, this.state.semitoneShift)
-    } else if(colorName == "blue"){
+    } else if(colorName == "yellow"){
       return this.shiftBySemitones(783.9909, this.state.semitoneShift)
+    } else if(colorName == "yellow-green"){
+      return this.shiftBySemitones(880.0000, this.state.semitoneShift)      
+    } else if(colorName == "green"){
+      return this.shiftBySemitones(987.77, this.state.semitoneShift)
+    } else if(colorName == "green-blue"){
+      return this.shiftBySemitones(1046.5, this.state.semitoneShift)
+    } else if(colorName == "blue"){
+      return this.shiftBySemitones(1174.7, this.state.semitoneShift)
+    } else if(colorName == "blue-violet"){
+      return this.shiftBySemitones(1318.5, this.state.semitoneShift)      
     } else if(colorName == "violet"){
-      return this.shiftBySemitones(880.0000, this.state.semitoneShift)
-    } 
+      return this.shiftBySemitones(1396.9, this.state.semitoneShift)
+    } else if(colorName == "violet-red"){
+      return this.shiftBySemitones(1568.0, this.state.semitoneShift)
+    }
+
   }
 
   colorNameToHex(colorName){
     if(colorName == "red"){
       return "#ff0000"
+    } else if(colorName == "red-orange"){
+      return "#FF5349"
     } else if(colorName == "orange"){
       return "#FFA500"
+    } else if(colorName == "orange-yellow"){
+      return "#FFAE42"
     } else if(colorName == "yellow"){
       return "#ffff00"
+    } else if(colorName == "yellow-green"){
+      return "#ADFF2F"
     } else if(colorName == "green"){
       return "#00ff00"
+    } else if(colorName == "green-blue"){
+      return "#48D1CC"
     } else if(colorName == "blue"){
       return "#0000ff"
+    } else if(colorName == "blue-violet"){
+      return "#8A2BE2" 
     } else if(colorName == "violet"){
       return "#EE82EE"
+    } else if(colorName == "violet-red"){
+      return "#C71585"
     }
   }
 
   colorNameToInt(colorName){
-   if(colorName == "red"){
+    if(colorName == "red"){
       return 0
-    } else if(colorName == "orange"){
+    } else if(colorName == "red-orange"){
       return 1
-    } else if(colorName == "yellow"){
+    } else if(colorName == "orange"){
       return 2
-    } else if(colorName == "green"){
+    } else if(colorName == "orange-yellow"){
       return 3
-    } else if(colorName == "blue"){
+    } else if(colorName == "yellow"){
       return 4
-    } else if(colorName == "violet"){
+    } else if(colorName == "yellow-green"){
       return 5
-    } 
+    } else if(colorName == "green"){
+      return 6
+    } else if(colorName == "green-blue"){
+      return 7
+    } else if(colorName == "blue"){
+      return 8
+    } else if(colorName == "blue-violet"){
+      return 9
+    } else if(colorName == "violet"){
+      return 10
+    } else if(colorName == "violet-red"){
+      return 11
+    }
   }
 
   intToColorName(int){
-   if(int == 0){
+    if(int == 0){
       return "red"
     } else if(int == 1){
-      return "orange"
+      return "red-orange"
     } else if(int == 2){
-      return "yellow"
+      return "orange"
     } else if(int == 3){
-      return "green"
+      return "orange-yellow"
     } else if(int == 4){
-      return "blue"
+      return "yellow"
     } else if(int == 5){
+      return "yellow-green"
+    } else if(int == 6){
+      return "green"
+    } else if(int == 7){
+      return "green-blue"
+    } else if(int == 8){
+      return "blue"
+    } else if(int == 9){
+      return "blue-violet"
+    } else if(int == 10){
       return "violet"
-    } 
+    } else if(int == 11){
+      return "violet-red"
+    }
   }
 
   randomColor(){
-    return ["red","orange","yellow","green","blue","violet"].sort(() => Math.random() - 0.5)[0]
+    return COLORS.sort(() => Math.random() - 0.5)[0]
   }
 
   randomWaveform(){
@@ -688,12 +744,12 @@ class App extends Component {
   }
 
   distanceBetweenColors(color1, color2){
-    var colors = ["red","orange","yellow","green","blue","violet"]
+    var colors = COLORS
     let ci1, ci2
     ci1 = colors.indexOf(color1)
     ci2 = colors.indexOf(color2)
     // check to left and right
-    return Math.min( Math.abs(ci1 - ci2), ( 6-Math.abs(ci1 - ci2) ) )
+    return Math.min( Math.abs(ci1 - ci2), ( COLORS.length-Math.abs(ci1 - ci2) ) )
   }
 
   shuffle(array) {
@@ -1026,7 +1082,7 @@ class App extends Component {
     )
     let soundShows
     if(this.state.synthsPlaying){
-      soundShows = this.state.synthsPlaying.map( (isPlaying, index) => { return <SoundShow color={ this.state.synths[index] ? this.state.synths[index].color : "#eee"  } playing={ isPlaying } /> })
+      soundShows = this.state.synthsPlaying.map( (isPlaying, index) => { return <SoundShow color={ this.state.synths[index] ? this.colorNameToHex(this.state.synths[index].color) : "#eee"  } playing={ isPlaying } /> })
     }
 
     let pixels
@@ -1034,7 +1090,7 @@ class App extends Component {
       pixels = this.state.pixels.map( (pixel, index) => { return <Pixel onClick={ () => { this.removePixel(index) } } color={ this.colorNameToHex(pixel.color) } /> })
     }
 
-    let colorPalette = ["red","orange","yellow","green","blue","violet"].map( (color) => <Pixel color={ this.colorNameToHex(color) } onClick={ () => { this.addPixel(color) } } /> )
+    let colorPalette = COLORS.map( (color) => <Pixel color={ this.colorNameToHex(color) } onClick={ () => { this.addPixel(color) } } /> )
 
     let buttonClasses = "user-control button "
     let playButtonClasses = buttonClasses + "play"
@@ -1070,56 +1126,8 @@ class App extends Component {
           <div onClick={ () => { this.toggleRandomizePixels() } }  className={randButtonClasses}>RAND</div>
 
         </div>
-          <MasterSequencer toggleMasterSequencerStep={ this.toggleMasterSequencerStep } steps={ this.state.masterSequencerSteps } />
-
-        <div className="hide user-controls-container">
-          <div className="pixels-container">
-            { colorPalette }
-          </div>
-
-          <div onClick={ () => { this.playSounds() } } className="button play">PLAY</div>
-          <div onClick={ () => { this.stopSounds() } } className="button stop">STOP</div>
-          
-          <label>
-            masterGain
-            <input onChange={ (e) => this.changeMasterGain(e.target.value) } type="text" name="masterGain" value={ this.state.masterGain } placeholder="masterGain" />
-          </label>
-
-          <label>
-            tempo
-            <input onChange={ (e) => this.changeTempo(e.target.value) } type="text" name="tempo" value={ this.state.tempo } placeholder="tempo" />
-          </label>
-          
-          <label>
-            randomizePixelsInterval
-            <input onChange={ (e) => this.changeRandomizePixelsInterval(e.target.value) } type="text" name="randomizePixelsInterval" value={ this.state.randomizePixelsInterval } placeholder="tempo" />
-          </label>
-          
-          <label>
-            noteLength
-            <input onChange={ (e) => this.setNoteLength(e.target.value) } type="text" name="noteLength" value={ this.state.noteLength } placeholder="tempo" />
-          </label>
-
-          <label>
-            <input onClick={ (e) => this.toggleRandomizePixels() } type="button" name="randomizePixels" value={ "randomize" + (this.state.randomizePixels ? "(ON)" : "(OFF)") } />
-          </label>
-
-          <label>
-            <input onClick={ (e) => this.toggleMasterSequencerSteps() } type="button" name="toggleMasterSequencerSteps" value="toggle steps" />
-          </label>
-
-          <label>
-            numRandomPix
-            <input onChange={ (e) => this.changeNumPix(e.target.value) } type="text" name="numPix" value={ this.state.numPix } placeholder="numPix" />
-          </label>
-
-          <label>
-            semitoneShift
-            <input onChange={ (e) => this.changeNumPix(e.target.value) } type="text" name="semitoneShift" value={ this.state.semitoneShift } placeholder="semitoneShift" />
-          </label>
-
-          <MasterSequencer toggleMasterSequencerStep={ this.toggleMasterSequencerStep } steps={ this.state.masterSequencerSteps } />
-        </div>
+       
+        <MasterSequencer toggleMasterSequencerStep={ this.toggleMasterSequencerStep } steps={ this.state.masterSequencerSteps } />
 
         <div className="soundshower-container">
           { soundShows }
