@@ -19,7 +19,8 @@ var seqWorker = new WorkerBuilder(SequencerWorker)
 
 
 const COLORS = [ "red", "red-orange", "orange", "orange-yellow", "yellow", "yellow-green", "green", "green-blue", "blue", "blue-violet", "violet", "violet-red"]
-
+const SCHEMEMODE0 = 0
+const SCHEMEMODE1 = 1
 
 class App extends Component { 
   constructor(props){
@@ -40,7 +41,9 @@ class App extends Component {
       randomizePixels: false,
       randomizePixelsInterval: 3600,
       noteLength: 0.3,
-      semitoneShift: 0
+      semitoneShift: 0,
+      schemeMode: SCHEMEMODE0,
+      online: true
     }
 
     this.toggleMasterSequencerStep = this.toggleMasterSequencerStep.bind(this)
@@ -134,6 +137,18 @@ class App extends Component {
   this.setState( prevState => ({randomizePixelsInterval: newInterval}), () => {
       seqWorker.postMessage({changeRandomizePixelsInterval: this.state.randomizePixelsInterval})
     }) 
+  }
+
+  incrementSchemeMode(){
+    let newSchemeMode = this.state.schemeMode + 1
+    if(newSchemeMode > SCHEMEMODE1){
+      newSchemeMode = SCHEMEMODE0
+    }
+    this.setState({schemeMode: newSchemeMode})
+  }
+
+  toggleOnline(){
+    this.setState(prevState => ({online: !prevState.online}) )
   }
 
   toggleMasterSequencerStep(step){
@@ -641,12 +656,12 @@ class App extends Component {
         let matchedColorIndex = matchedSchemes[x].matchedColors.indexOf(this.state.synths[i].color)
         if(matchedColorIndex > -1){
           isSchemePix = true
-          if(true){
+          if(this.state.schemeMode == SCHEMEMODE1){
 
             // add in more to play if scheme  was matched
             numToPlay += matchedSchemes[x].numToPlay
           } else {
-
+            // SCHEMEMODE0
 
             // console.log( 'I am schemin on scheme', x )
 
@@ -671,6 +686,8 @@ class App extends Component {
       }
 
       if(numToPlay > 0){
+
+        // only happens in schememode1
 
         let whichSchemesSkipValue = Math.floor(Math.random()*matchedSchemes.length)
         // let whichSchemesSkipValue = 0
@@ -1096,6 +1113,8 @@ class App extends Component {
     let playButtonClasses = buttonClasses + "play"
     let stopButtonClasses = buttonClasses + "stop"
     let randButtonClasses = buttonClasses + "rand"
+    let schmButtonClasses = buttonClasses + "schm"
+    let fnetButtonClasses = buttonClasses + "fnet"
 
     if(this.state.playing){
       playButtonClasses += " white-border"
@@ -1105,6 +1124,16 @@ class App extends Component {
 
     if(this.state.randomizePixels){
       randButtonClasses += " white-border"
+    }
+
+    if(this.state.schemeMode === SCHEMEMODE0){
+      schmButtonClasses += " white-border"
+    } else {
+      schmButtonClasses += " green-border"
+    }
+
+    if(this.state.online === true){
+      fnetButtonClasses += " white-border"
     }
 
     return (
@@ -1124,6 +1153,8 @@ class App extends Component {
           <div onClick={ () => { this.playSounds() } } className={playButtonClasses}>PLAY</div>
           <div onClick={ () => { this.stopSounds() } } className={stopButtonClasses}>STOP</div>
           <div onClick={ () => { this.toggleRandomizePixels() } }  className={randButtonClasses}>RAND</div>
+          <div onClick={ () => { this.incrementSchemeMode() } }  className={schmButtonClasses}>SCHM</div>
+          <div onClick={ () => { this.toggleOnline() } }  className={fnetButtonClasses}>FNET</div>
 
         </div>
        

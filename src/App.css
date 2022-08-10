@@ -5,9 +5,9 @@
 
 .pixel {
   display: inline-block;
-  width: 16.66666%;
-  min-height: 8.33333vw;
-  height: 8.33333vw;
+  width: 16.666vw;
+  min-height: 8.3vw;
+  height: 8.3vw;
 }
 
 .hide {
@@ -71,13 +71,17 @@ div.knob-container label {
   box-shadow: 0 0 0 5px black;
   text-align: center;
   display: inline-block;
-  font-size: 2em;
-  width: 8.3vw;
+  font-size: 1.2em;
+  width: 4.9vw;
   height: 8.3vw;
 }
 
 .button.white-border {
   box-shadow: 0 0 0 5px #fff;
+}
+
+.button.green-border {
+  box-shadow: 0 0 0 5px #0f0;
 }
 
 .button:active {
@@ -97,6 +101,16 @@ div.knob-container label {
 .rand {
   background-color: #00f;
   color: #00b;
+}
+
+.schm {
+  background-color: #f0f;
+  color: #b0b;
+}
+
+.fnet {
+  background-color: #ff0;
+  color: #bb0;
 }
 
 .sequencer-container {
