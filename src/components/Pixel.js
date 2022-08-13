@@ -1,4 +1,3 @@
-import React, { Component } from 'react';
 function Pixel(props){
   // let synth = new Synth('sine', 440)
 

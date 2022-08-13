@@ -10,6 +10,10 @@
   height: 8.3vw;
 }
 
+.colorpicker-container {
+  width:  100vw;
+}
+
 .hide {
   display: none;
 }

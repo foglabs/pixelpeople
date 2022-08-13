@@ -2,6 +2,7 @@ import logo from "./logo.svg";
 import "./App.css";
 // core
 import React, { Component, useEffect } from "react"
+import { w3cwebsocket as W3CWebSocket } from "websocket"
 
 // extra
 import { Knob, Arc, Pointer, Value } from 'rc-knob'
@@ -9,14 +10,21 @@ import { Knob, Arc, Pointer, Value } from 'rc-knob'
 // me
 import Pixel from "./components/Pixel.js"
 import SoundShow from "./components/SoundShow.js"
+import ColorPicker from "./components/ColorPicker.js"
 import Synth from "./classes/Synth.js"
 import MasterSequencer from "./classes/MasterSequencer.js"
 import ColorScheme from "./classes/ColorScheme.js"
 
 import WorkerBuilder from "./wb.js"
 import SequencerWorker from "./seqWorker.js"
+
+// handles timing
 var seqWorker = new WorkerBuilder(SequencerWorker)
 
+// online
+// const SOCKET_BACKEND = "wss://" + window.location.hostname + "/online"
+const SOCKET_BACKEND = "ws://localhost:8000"
+const client = new W3CWebSocket(SOCKET_BACKEND)
 
 const COLORS = [ "red", "red-orange", "orange", "orange-yellow", "yellow", "yellow-green", "green", "green-blue", "blue", "blue-violet", "violet", "violet-red"]
 const SCHEMEMODE0 = 0
@@ -43,23 +51,57 @@ class App extends Component {
       noteLength: 0.3,
       semitoneShift: 0,
       schemeMode: SCHEMEMODE0,
-      online: true
+      
+      online: true,
+      userID: false,
+      userColor: false
     }
 
     this.toggleMasterSequencerStep = this.toggleMasterSequencerStep.bind(this)
     this.addPixel = this.addPixel.bind(this)
     this.removePixel = this.removePixel.bind(this)
     this.changeMasterGain = this.changeMasterGain.bind(this)
+    this.changeColor = this.changeColor.bind(this)
   }
 
   componentDidMount(props){
     this.startAudioContext()
 
+    client.onopen = () => {
+      console.log('WebSocket Client Connectedzz');
+      let data = JSON.stringify({url: URL});
+      client.send(data);
+    }
+
+    client.onmessage = (message) => {
+      // console.log('da message', message)
+      let data = JSON.parse(message.data)
+
+      let localData = {}
+      if(!this.state.userID){
+        // only update on init
+        localData.userID = data.userID
+        localData.userColor = data.userColor
+      }
+
+      // regular pixel update
+      localData.pixels = this.pixelsFromColors(data.pixelColors)
+      this.setState(localData, () => {
+        this.updateSounds()
+        console.log( 'pixxx', this.state.pixels )
+        this.setColorScheme(this.state.pixels)
+      })
+    }
+
+
     // let synth1,synth2,synth3
     // synth1 = new Synth(this.audioContext, this.gainNode, 0.2, "sine", 440, 0.1, 0.1, 0.1)
     // synth2 = new Synth(this.audioContext, this.gainNode, 0.2, "sine", 880, 0.1, 0.1, 0.1)
     // synth3 = new Synth(this.audioContext, this.gainNode, 0.2, "sine", 220, 0.1, 0.1, 0.1)
+
     this.setState({pixels: this.getPixels()}, () => {
+      // in online, this wont do antying ^ pixels arrive over socket
+
       // after grabbing pixel state, make sounds
       this.updateSounds()
       this.setColorScheme(this.state.pixels)
@@ -370,7 +412,12 @@ class App extends Component {
     pixels.splice( index, 1 )
     this.setState({pixels: pixels}, () => {
       this.updateSounds()
+      this.setColorScheme(this.state.pixels)
     })
+  }
+
+  pixelsFromColors(colors){
+    return colors.map(color => this.newPixel(color))
   }
 
   getPixels(){
@@ -381,7 +428,11 @@ class App extends Component {
     //   {clientId: "def", color: "yellow", gain: 0.5},
     // ]
     
-    return this.addRandomPixels(this.state.numPix)
+    if(this.state.online){
+      return []
+    } else {
+      return this.addRandomPixels(this.state.numPix)
+    }
     // return []
   }
 
@@ -396,6 +447,15 @@ class App extends Component {
 
   tempoToStepTime(tempo){
     return Math.floor(15000/tempo)
+  }
+
+  changeColor(newColor){
+    this.massageAudioContext()
+
+    this.setState({userColor: newColor}, () => {
+      let msg = JSON.stringify({userID: this.state.userID, changeColor: newColor})
+      client.send(msg)
+    }) 
   }
 
   changeTempo(newTempo){
@@ -478,7 +538,7 @@ class App extends Component {
           // existing synth, ramp instead
 
           synth = this.state.synths[index]
-          synth.update( this.colorNameToFreq(synth.color) )
+          synth.update( this.colorNameToFreq(pixel.color) )
           keepSynthIds.push(synth.id)
           // console.log( 'keeping existing', synth.id )  
         }
@@ -836,7 +896,14 @@ class App extends Component {
     return newSynth
   }
 
+  massageAudioContext(){
+    if(this.audioContext.state == "suspended"){
+      this.audioContext.resume()
+    }
+  }
+
   playSounds(){
+    this.massageAudioContext()
     console.log( 'play the sounds' )
     seqWorker.postMessage({play: true})
     this.setState({playing: true})
@@ -1139,8 +1206,12 @@ class App extends Component {
     return (
       <div className="container">
 
-        <div className="pixels-container">
+        <div className="hide pixels-container">
           { colorPalette }
+        </div>
+
+        <div className="colorpicker-container">
+          <ColorPicker colorNameToHex={ this.colorNameToHex } changeColor={ this.changeColor } />
         </div>
         <div className="user-controls-container">
           { masterGainKnob }
