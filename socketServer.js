@@ -18,7 +18,13 @@ function randomColor(){
 }
 
 function updatePixels(){
-  let pixelColors = Object.keys(clients).map(userID => clients[userID].pixelColor)
+  let pixelColors = Object.keys(clients).map( (userID) => {
+    if(clients[userID]){
+      return clients[userID].pixelColor
+    }
+  })
+
+  console.log( 'these are my current colors!', pixelColors )
 
   Object.keys(clients).forEach( (userID) => {
     // update each client on current colors
@@ -106,11 +112,18 @@ wsServer.on('request', function(request) {
 
       // }
 
-      if(data.changeColor){
-        // if user asked to change their color, do it
-        clients[data.userID].pixelColor = data.changeColor
-      }
+      if( clients[data.userID] ){
+        if(data.changeColor){
+          // if user asked to change their color, do it
+          clients[data.userID].pixelColor = data.changeColor
+        } else if(data.disconnect){
+          console.log( 'disconnect ', data.userID )
+          clients[data.userID].close()
+          delete clients[data.userID]
+        }
 
+      }
+      
       // then update everybody with all the colors
       updatePixels()
     }

@@ -23,10 +23,23 @@ var seqWorker = new WorkerBuilder(SequencerWorker)
 
 // online
 // const SOCKET_BACKEND = "wss://" + window.location.hostname + "/online"
-const SOCKET_BACKEND = "ws://localhost:8000"
-const client = new W3CWebSocket(SOCKET_BACKEND)
+const SOCKET_BACKEND = "ws://" + window.location.hostname + ":8000"
+var client = new W3CWebSocket(SOCKET_BACKEND)
 
-const COLORS = [ "red", "red-orange", "orange", "orange-yellow", "yellow", "yellow-green", "green", "green-blue", "blue", "blue-violet", "violet", "violet-red"]
+function killOnline(userID){
+  let data = JSON.stringify({disconnect: true, userID: userID})
+  client.send(data)
+
+}
+
+// tell server we're disconnecting before close
+window.onbeforeunload = function() {
+  client.onclose = function () {}; // disable onclose handler first
+  killOnline(client.userID)
+  client.close();
+}
+
+const COLORS = [ "red", "red-orange", "orange", "orange-yellow", "yellow", "yellow-green", "green", "green-blue", "blue", "blue-violet", "violet", "violet-red",]
 const SCHEMEMODE0 = 0
 const SCHEMEMODE1 = 1
 
@@ -67,32 +80,7 @@ class App extends Component {
   componentDidMount(props){
     this.startAudioContext()
 
-    client.onopen = () => {
-      console.log('WebSocket Client Connectedzz');
-      let data = JSON.stringify({url: URL});
-      client.send(data);
-    }
-
-    client.onmessage = (message) => {
-      // console.log('da message', message)
-      let data = JSON.parse(message.data)
-
-      let localData = {}
-      if(!this.state.userID){
-        // only update on init
-        localData.userID = data.userID
-        localData.userColor = data.userColor
-      }
-
-      // regular pixel update
-      localData.pixels = this.pixelsFromColors(data.pixelColors)
-      this.setState(localData, () => {
-        this.updateSounds()
-        console.log( 'pixxx', this.state.pixels )
-        this.setColorScheme(this.state.pixels)
-      })
-    }
-
+    this.setupSocketEvents()
 
     // let synth1,synth2,synth3
     // synth1 = new Synth(this.audioContext, this.gainNode, 0.2, "sine", 440, 0.1, 0.1, 0.1)
@@ -152,16 +140,55 @@ class App extends Component {
           // update from master sequencer
           // this.updateSequencerTracks()
 
-
-          let sp = []
-          for(var i=0; i<this.state.synths.length; i++){
-            // poll for are synths playing so we can SoundShow them shits
-            sp[i] = this.state.synths[i].playing
-          }
-          this.setState({synthsPlaying: sp})
+          this.updateSynthsPlaying()
         }
       }, 60)
     })
+  }
+
+  setupSocketEvents(){
+    client.onopen = () => {
+      console.log('WebSocket Client Connectedzz');
+      let data = JSON.stringify({url: URL});
+      client.send(data);
+    }
+
+    client.onmessage = (message) => {
+      // console.log('da message', message)
+      let data = JSON.parse(message.data)
+
+      let localData = {}
+      if(!this.state.userID){
+        // only update on init
+        localData.userID = data.userID
+        localData.userColor = data.userColor
+
+        // store on client as well so we know how to close socket without state
+        client.userID = data.userID
+      }
+
+      // regular pixel update
+      localData.pixels = this.pixelsFromColors(data.pixelColors)
+      this.setState(localData, () => {
+        this.updateSounds()
+        this.setColorScheme(this.state.pixels)
+      })
+    }
+  }
+
+  restartOnline(){
+    client = new W3CWebSocket(SOCKET_BACKEND)
+    // have to re-set this up because old ones refered to dead socket
+    this.setupSocketEvents()
+  }
+
+  stopOnline(){
+    // tell server were disconnecting, close socket
+    killOnline(this.state.userID)
+    if(this.state.userID){
+      // null out the local stuff
+      this.setState({userID: false, pixels: []})
+    }
   }
 
   toggleRandomizePixels(){
@@ -190,7 +217,16 @@ class App extends Component {
   }
 
   toggleOnline(){
-    this.setState(prevState => ({online: !prevState.online}) )
+      console.log( 'duh!' )
+
+    this.setState(prevState => ({online: !prevState.online}), () => {
+      console.log( 'its this ', this.state.online )
+      if(!this.state.online){
+        this.stopOnline()
+      } else {
+        this.restartOnline()
+      }
+    })
   }
 
   toggleMasterSequencerStep(step){
@@ -222,6 +258,16 @@ class App extends Component {
     synth.color = color
 
     return synth
+  }
+
+  removeSynths(){
+    for(var i=0; i<this.state.synths.length; i++){
+      // delete each seq track
+      seqWorker.postMessage({removeTrack: {index: i} })
+    }
+
+    // remove the actual synths and sp
+    this.setState({synths: [], synthsPlaying: []})
   }
 
   shiftBySemitones(freq, semitones){
@@ -486,16 +532,23 @@ class App extends Component {
   }
 
   changeNoteLength(length){
-    let synths = this.state.synths
-    let a,h,r
-    // let oldLength = this.state.noteLength
-    a = length * 0.10
-    h = length * 0.40
-    r = length * 0.20
-    synths.map( (synth) => {
-      synth.setNoteLength(a,h,r)
+    this.setState({noteLength: length}, () => {
+  
+      console.log( 'unkown', length )
+      if(length > 0){
+        let synths = this.state.synths
+        let a,h,r
+        a = length * 0.10
+        h = length * 0.40
+        r = length * 0.20
+        synths.map( (synth) => {
+          synth.setNoteLength(a,h,r)
+        })
+      }
+
     })
-    // this.setState({synths: synths})
+
+    
   }
 
   newPixel(color=null){
@@ -511,8 +564,20 @@ class App extends Component {
     this.setState({numPix: newNum}) 
   }
 
+  updateSynthsPlaying(){
+    let sp = []
+    for(var i=0; i<this.state.synths.length; i++){
+      // poll for are synths playing so we can SoundShow them shits
+      sp[i] = this.state.synths[i].playing
+    }
+    this.setState({synthsPlaying: sp})
+  }
+
   // synth utilities
   updateSounds(){
+    if(this.state.pixels.length < 1){
+      this.removeSynths()
+    }
 
     var keepSynthIds = []
 
@@ -547,7 +612,7 @@ class App extends Component {
         // new synth
         synth = this.createSynth(index, pixel.gain, this.randomWaveform(), this.colorNameToFreq(pixel.color), a, h, r, pixel.color)
 
-        console.log( 'i will craete pix synth of color ', pixel.color, ' at index ', index )
+        // console.log( 'i will craete pix synth of color ', pixel.color, ' at index ', index )
         // same order as 
         synth.index = index
         newSynths.push(synth)
@@ -563,6 +628,7 @@ class App extends Component {
       //  2 pix repeat gives freq * 2 etc
 
       // account for synths were adding right now!
+      // at which synths index to start adding patternsynths
       let patternSoundIndex = this.state.synths.length + newSynths.length
 
       let colorInts = this.state.pixels.map( (pixel) => { return this.colorNameToInt(pixel.color) } )
@@ -592,18 +658,22 @@ class App extends Component {
             // add pattern sounds
             for(var x=1; x<numberOfRepeats+1; x++){
 
-              // is there an existing one? 
-              existingPatternSoundId = this.findExistingPatternSound( this.state.synths[thisColorIndex].id , x) 
-              if( existingPatternSoundId ){
-                keepSynthIds.push(existingPatternSoundId)
-              } else {
-                newSynths.push( this.createPatternSound( this.state.synths[thisColorIndex].id, this.state.synths[thisColorIndex].color, x, patternSoundIndex, 0.4 ) )
+              // is there an existing one?
+
+              if(this.state.synths[thisColorIndex]){
+                existingPatternSoundId = this.findExistingPatternSound( this.state.synths[thisColorIndex].id , x) 
+                if( existingPatternSoundId ){
+                  keepSynthIds.push(existingPatternSoundId)
+                } else {
+                  newSynths.push( this.createPatternSound( this.state.synths[thisColorIndex].id, this.state.synths[thisColorIndex].color, x, patternSoundIndex, 0.4 ) )
+                }
+
+                patternSoundIndex++
+              
               }
-            
-              patternSoundIndex++
+
             }
           }
-          // console.log('starting with color ', this.intToColorName(thisColor), ' number of ', repeatLength, ' pix repeats is ', numberOfRepeats )
 
         }
       }
@@ -1174,7 +1244,26 @@ class App extends Component {
       pixels = this.state.pixels.map( (pixel, index) => { return <Pixel onClick={ () => { this.removePixel(index) } } color={ this.colorNameToHex(pixel.color) } /> })
     }
 
-    let colorPalette = COLORS.map( (color) => <Pixel color={ this.colorNameToHex(color) } onClick={ () => { this.addPixel(color) } } /> )
+    let colorPalette
+    if(this.state.online){
+      // change your color online
+      colorPalette = <ColorPicker colorNameToHex={ this.colorNameToHex } changeColor={ this.changeColor } />
+    } else {
+      // add extra colors offline
+      colorPalette = COLORS.map( (color) => <Pixel color={ this.colorNameToHex(color) } onClick={ () => { this.addPixel(color) } } /> )
+    }
+
+    let liveText, liveClasses, liveContainer
+    liveClasses = "live-container"
+    if(this.state.online){
+      liveClasses += " live"
+      liveText = "LIVE"
+    }
+    liveContainer = (
+      <div className={ liveClasses }>
+        { liveText }
+      </div>
+    )
 
     let buttonClasses = "user-control button "
     let playButtonClasses = buttonClasses + "play"
@@ -1206,30 +1295,82 @@ class App extends Component {
     return (
       <div className="container">
 
-        <div className="hide pixels-container">
+        <div className="pixels-container">
           { colorPalette }
         </div>
 
-        <div className="colorpicker-container">
-          <ColorPicker colorNameToHex={ this.colorNameToHex } changeColor={ this.changeColor } />
-        </div>
         <div className="user-controls-container">
-          { masterGainKnob }
-          { tempoKnob }
-          { randomizePixelsIntervalKnob }
-          { numPixKnob }
-          { noteLengthKnob }
-          { semitoneShiftKnob }
 
-          <div onClick={ () => { this.playSounds() } } className={playButtonClasses}>PLAY</div>
-          <div onClick={ () => { this.stopSounds() } } className={stopButtonClasses}>STOP</div>
-          <div onClick={ () => { this.toggleRandomizePixels() } }  className={randButtonClasses}>RAND</div>
-          <div onClick={ () => { this.incrementSchemeMode() } }  className={schmButtonClasses}>SCHM</div>
-          <div onClick={ () => { this.toggleOnline() } }  className={fnetButtonClasses}>FNET</div>
+          <span id="knobs">
+            { masterGainKnob }
+            { tempoKnob }
+            { randomizePixelsIntervalKnob }
+            { numPixKnob }
+            { noteLengthKnob }
+            { semitoneShiftKnob }
+          </span>
+
+          <span id="simple">
+            <label class="simple-control">
+              <button onClick={ () => this.changeMasterGain(this.state.masterGain+0.04) } >▲</button>
+              <button onClick={ () => this.changeMasterGain(this.state.masterGain-0.04) } >▼</button>
+              <div>masterGain</div>
+              <div>{ this.state.masterGain }</div>
+            </label>
+
+            <label class="simple-control">
+              <button onClick={ () => this.changeTempo(this.state.tempo+1) } >▲</button>
+              <button onClick={ () => this.changeTempo(this.state.tempo-1) } >▼</button>
+              <div>tempo</div>
+              <div>{ this.state.tempo }</div>
+            </label>
+
+            <label class="simple-control">
+              <button onClick={ () => this.changeRandomizePixelsInterval(this.state.randomizePixelsInterval+100) } >▲</button>
+              <button onClick={ () => this.changeRandomizePixelsInterval(this.state.randomizePixelsInterval-100) } >▼</button>
+              <div>randPix</div>
+              <div>{ this.state.randomizePixelsInterval }</div>
+            </label>
+
+            <label class="simple-control">
+              <button onClick={ () => this.changeNumPix(this.state.numPix+1) } >▲</button>
+              <button onClick={ () => this.changeNumPix(this.state.numPix-1) } >▼</button>
+              <div>numPix</div>
+              <div>{ this.state.numPix }</div>
+            </label>
+
+            <label class="simple-control">
+              <button onClick={ () => this.changeNoteLength(this.state.noteLength+0.1) } >▲</button>
+              <button onClick={ () => this.changeNoteLength(this.state.noteLength-0.1) } >▼</button>
+              <div>noteLength</div>
+              <div>{ this.state.noteLength }</div>
+            </label>
+
+            <label class="simple-control">
+              <button onClick={ () => this.changeSemitoneShift(this.state.semitoneShift+1) } >▲</button>
+              <button onClick={ () => this.changeSemitoneShift(this.state.semitoneShift-1) } >▼</button>
+              <div>semitoneShift</div>
+              <div>{ this.state.semitoneShift }</div>
+            </label>
+
+          </span>
+
+
+          <span id="transport">
+            <div onClick={ () => { this.playSounds() } } className={playButtonClasses}>PLAY</div>
+            <div onClick={ () => { this.stopSounds() } } className={stopButtonClasses}>STOP</div>
+            <div onClick={ () => { this.toggleRandomizePixels() } }  className={randButtonClasses}>RAND</div>
+            <div onClick={ () => { this.incrementSchemeMode() } }  className={schmButtonClasses}>SCHM</div>
+            <div onClick={ () => { this.toggleOnline() } }  className={fnetButtonClasses}>FNET</div>
+          </span>
 
         </div>
        
         <MasterSequencer toggleMasterSequencerStep={ this.toggleMasterSequencerStep } steps={ this.state.masterSequencerSteps } />
+
+
+        { liveContainer }
+
 
         <div className="soundshower-container">
           { soundShows }

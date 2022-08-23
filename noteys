@@ -156,7 +156,6 @@ add too many synths, goes WEEEEEOOOO
   *just need to make first pattern sound have 2x freq, right now its doing 1x
 
 
-HEY should be able to set whether randomizePixels removes existing
 
 
 
@@ -170,6 +169,20 @@ deleting doesnt always work
 
 
 multiplayer
-  need to clear pixels after person leaves
-  
+  *need to clear pixels after person leaves
+    
 
+
+
+HEY should be able to set whether randomizePixels removes existing pix
+
+synthsPlaying doesnt update colors when using socket pixels
+  because SoundShow referes to this.state.synths
+  but doesnt update when synth colors get changed
+  could store color on synthsplaying but that seems stupidx xz
+
+
+
+
+
+need to check boundaries on mastergain + others
