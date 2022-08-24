@@ -17,6 +17,11 @@ function randomColor(){
   return COLORS.sort(() => Math.random() - 0.5)[0]
 }
 
+function deleteClient(userID){
+  clients[userID].close()
+  delete clients[userID]
+}
+
 function updatePixels(){
   let pixelColors = Object.keys(clients).map( (userID) => {
     if(clients[userID]){
@@ -70,6 +75,9 @@ wsServer.on('request', function(request) {
   clients[userID] = connection
   // init rand color for new user, will be sent when we 
   clients[userID].pixelColor = randomColor()
+  clients[userID].pixelActive = true
+  // tell the new client who they is and what the pixels are
+  updatePixels()
 
   console.log('connected: ' + userID + ' in ' + Object.getOwnPropertyNames(clients))
 
@@ -77,10 +85,7 @@ wsServer.on('request', function(request) {
 
     if (message.type === 'utf8') {
       console.log('Received Message: ' + message.utf8Data);
-      console.log(message.utf8Data)
-
       let data = JSON.parse(message.utf8Data);
-      console.log(data)
 
       // // get origin from client!
       // if(!client[data.userID].pixelReady) {
@@ -113,19 +118,46 @@ wsServer.on('request', function(request) {
       // }
 
       if( clients[data.userID] ){
-        if(data.changeColor){
-          // if user asked to change their color, do it
-          clients[data.userID].pixelColor = data.changeColor
-        } else if(data.disconnect){
-          console.log( 'disconnect ', data.userID )
-          clients[data.userID].close()
-          delete clients[data.userID]
+
+        if(data.pong){
+          // client responded to our ping!!!
+          console.log( 'received pong from client ', data.userID )
+          clients[data.userID].pixelActive = true
+        } else {
+
+          // actual state change
+          if(data.changeColor){
+            // if user asked to change their color, do it
+            clients[data.userID].pixelColor = data.changeColor
+          } else if(data.disconnect){
+            console.log( 'disconnect ', data.userID )
+            deleteClient(data.userID)
+          }
+
+          // then update everybody with all the colors
+          updatePixels()
         }
 
       }
-      
-      // then update everybody with all the colors
-      updatePixels()
+
     }
-  });
-});
+  })
+
+
+  setInterval(() => {
+    let data = {ping: true}
+    Object.keys(clients).forEach( (userID) => {
+      console.log( 'sent ping ', userID )
+      sendDataToClient(userID, data)
+    })
+  }, 5000)
+  setInterval(() => {
+    Object.keys(clients).forEach( (userID) => {
+      if(!clients[userID].pixelActive){
+        console.log( 'culled dead client ', userID )
+        deleteClient(userID)
+      }
+    })
+  }, 10000)
+
+})

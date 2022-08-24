@@ -29,7 +29,6 @@ var client = new W3CWebSocket(SOCKET_BACKEND)
 function killOnline(userID){
   let data = JSON.stringify({disconnect: true, userID: userID})
   client.send(data)
-
 }
 
 // tell server we're disconnecting before close
@@ -129,6 +128,7 @@ class App extends Component {
       }
 
       setInterval(() => {
+        // update sounds frequently!!
         if(this.state.playing){
           // update seq tracks every 30ms
           
@@ -157,22 +157,31 @@ class App extends Component {
       // console.log('da message', message)
       let data = JSON.parse(message.data)
 
-      let localData = {}
-      if(!this.state.userID){
-        // only update on init
-        localData.userID = data.userID
-        localData.userColor = data.userColor
 
-        // store on client as well so we know how to close socket without state
-        client.userID = data.userID
+      if(data.ping){
+        console.log( 'sending ping wiht usid', this.state.userID )
+        client.send(JSON.stringify({userID: this.state.userID, pong: true}))
+      } else {
+        // actual state change
+        let localData = {}
+        if(!this.state.userID){
+          // only update on init
+          console.log( 'changed userid to ' )
+          localData.userID = data.userID
+          localData.userColor = data.userColor
+
+          // store on client as well so we know how to close socket without state
+          client.userID = data.userID
+        }
+
+        // regular pixel update
+        localData.pixels = this.pixelsFromColors(data.pixelColors)
+        this.setState(localData, () => {
+          this.updateSounds()
+          this.setColorScheme(this.state.pixels)
+        })
       }
 
-      // regular pixel update
-      localData.pixels = this.pixelsFromColors(data.pixelColors)
-      this.setState(localData, () => {
-        this.updateSounds()
-        this.setColorScheme(this.state.pixels)
-      })
     }
   }
 
@@ -523,18 +532,16 @@ class App extends Component {
   }
 
   changeMasterGain(newGain){
-    
-    this.setState({masterGain: newGain}, () => {
-      if(newGain === 0 || newGain > 0){
+    if(newGain === 0 || newGain > 0){
+      this.setState({masterGain: newGain}, () => {
         this.gainNode.gain.exponentialRampToValueAtTime(newGain, this.audioContext.currentTime+0.08)
-      }
-    })
+      })
+    }
   }
 
   changeNoteLength(length){
     this.setState({noteLength: length}, () => {
   
-      console.log( 'unkown', length )
       if(length > 0){
         let synths = this.state.synths
         let a,h,r
@@ -1312,8 +1319,8 @@ class App extends Component {
 
           <span id="simple">
             <label class="simple-control">
-              <button onClick={ () => this.changeMasterGain(this.state.masterGain+0.04) } >▲</button>
-              <button onClick={ () => this.changeMasterGain(this.state.masterGain-0.04) } >▼</button>
+              <button onClick={ () => this.changeMasterGain(this.state.masterGain+0.01) } >▲</button>
+              <button onClick={ () => this.changeMasterGain(this.state.masterGain-0.01) } >▼</button>
               <div>masterGain</div>
               <div>{ this.state.masterGain }</div>
             </label>
