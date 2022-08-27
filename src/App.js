@@ -341,6 +341,37 @@ class App extends Component {
     }
   }
 
+
+
+  colorNameToDarkHex(colorName){
+    if(colorName == "red"){
+      return "#7f0000"
+    } else if(colorName == "red-orange"){
+      return "#7f2924"
+    } else if(colorName == "orange"){
+      return "#7f5200"
+    } else if(colorName == "orange-yellow"){
+      return "#7f5721"
+    } else if(colorName == "yellow"){
+      return "#7f7f00"
+    } else if(colorName == "yellow-green"){
+      return "#567f17"
+    } else if(colorName == "green"){
+      return "#007f00"
+    } else if(colorName == "green-blue"){
+      return "#246866"
+    } else if(colorName == "blue"){
+      return "#00007f"
+    } else if(colorName == "blue-violet"){
+      return "#451571"
+    } else if(colorName == "violet"){
+      return "#774177"
+    } else if(colorName == "violet-red"){
+      return "#630a42"
+    }
+
+  }
+
   colorNameToInt(colorName){
     if(colorName == "red"){
       return 0
@@ -575,7 +606,11 @@ class App extends Component {
     let sp = []
     for(var i=0; i<this.state.synths.length; i++){
       // poll for are synths playing so we can SoundShow them shits
-      sp[i] = this.state.synths[i].playing
+      if(this.state.synths[i].playing){
+        sp[i] = this.colorNameToHex(this.state.synths[i].color)
+      } else {
+        sp[i] = this.colorNameToDarkHex(this.state.synths[i].color)
+      }
     }
     this.setState({synthsPlaying: sp})
   }
@@ -1243,7 +1278,7 @@ class App extends Component {
     )
     let soundShows
     if(this.state.synthsPlaying){
-      soundShows = this.state.synthsPlaying.map( (isPlaying, index) => { return <SoundShow color={ this.state.synths[index] ? this.colorNameToHex(this.state.synths[index].color) : "#eee"  } playing={ isPlaying } /> })
+      soundShows = this.state.synthsPlaying.map( (color, index) => { return <SoundShow color={ (this.state.synths[index] && color) ? color : "#000"  } /> })
     }
 
     let pixels
