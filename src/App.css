@@ -208,6 +208,16 @@ div.knob-container label {
 
 
 @media (orientation: portrait) {
+  .pixels-container {
+    min-height: 33.333vw;
+  }
+
+  .pixel {
+    width: 16.666vw;
+    min-height: 16.666vw;
+    height: 16.666vw;
+  }
+
   .live-container {
     position: fixed;
     bottom: 0;

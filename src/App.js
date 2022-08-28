@@ -139,8 +139,6 @@ class App extends Component {
           this.setColorScheme(this.state.pixels)
           // update from master sequencer
           // this.updateSequencerTracks()
-
-          this.updateSynthsPlaying()
         }
       }, 60)
     })
@@ -602,19 +600,6 @@ class App extends Component {
     this.setState({numPix: newNum}) 
   }
 
-  updateSynthsPlaying(){
-    let sp = []
-    for(var i=0; i<this.state.synths.length; i++){
-      // poll for are synths playing so we can SoundShow them shits
-      if(this.state.synths[i].playing){
-        sp[i] = this.colorNameToHex(this.state.synths[i].color)
-      } else {
-        sp[i] = this.colorNameToDarkHex(this.state.synths[i].color)
-      }
-    }
-    this.setState({synthsPlaying: sp})
-  }
-
   // synth utilities
   updateSounds(){
     if(this.state.pixels.length < 1){
@@ -659,6 +644,12 @@ class App extends Component {
         synth.index = index
         newSynths.push(synth)
         // console.log( 'new synth!', synth.id )
+      }
+
+
+      if(synth){
+        // sometimes synths will be empty but pixels will not
+        synth.color = pixel.color
       }
     })
 
@@ -1277,9 +1268,15 @@ class App extends Component {
       </div>
     )
     let soundShows
-    if(this.state.synthsPlaying){
-      soundShows = this.state.synthsPlaying.map( (color, index) => { return <SoundShow color={ (this.state.synths[index] && color) ? color : "#000"  } /> })
-    }
+    soundShows = this.state.synths.map( (synth, index) => {
+      let hexColor
+      if(synth.playing){
+        hexColor = this.colorNameToHex(synth.color)
+      } else {
+        hexColor = this.colorNameToDarkHex(synth.color)
+      }
+      return <SoundShow color={ hexColor } />
+    })
 
     let pixels
     if(this.state.pixels){

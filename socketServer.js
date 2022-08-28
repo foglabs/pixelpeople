@@ -29,8 +29,6 @@ function updatePixels(){
     }
   })
 
-  console.log( 'these are my current colors!', pixelColors )
-
   Object.keys(clients).forEach( (userID) => {
     // update each client on current colors
     console.log( 'updating colors for ', userID )
@@ -75,7 +73,7 @@ wsServer.on('request', function(request) {
   clients[userID] = connection
   // init rand color for new user, will be sent when we 
   clients[userID].pixelColor = randomColor()
-  clients[userID].pixelActive = true
+  clients[userID].lives = 2
   // tell the new client who they is and what the pixels are
   updatePixels()
 
@@ -122,7 +120,9 @@ wsServer.on('request', function(request) {
         if(data.pong){
           // client responded to our ping!!!
           console.log( 'received pong from client ', data.userID )
-          clients[data.userID].pixelActive = true
+          if(clients[data.userID].lives < 8){
+            clients[data.userID].lives += 1
+          }
         } else {
 
           // actual state change
@@ -150,14 +150,20 @@ wsServer.on('request', function(request) {
       console.log( 'sent ping ', userID )
       sendDataToClient(userID, data)
     })
-  }, 5000)
+  }, 2000)
   setInterval(() => {
     Object.keys(clients).forEach( (userID) => {
-      if(!clients[userID].pixelActive){
+      if(clients[userID].lives == 0){
         console.log( 'culled dead client ', userID )
+        // clean em up
         deleteClient(userID)
+        // let em know
+        updatePixels()
+      } else {
+        // take health off client 
+        clients[userID].lives -= 1
       }
     })
-  }, 10000)
+  }, 4000)
 
 })
