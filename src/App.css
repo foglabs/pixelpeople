@@ -213,17 +213,23 @@ div.knob-container label {
   }
 
   .pixel {
+    width: 8.333vw;
+    min-height: 8.333vw;
+    height: 8.333vw; 
+  }
+
+  .pixels-container .color-picker .pixel {
     width: 16.666vw;
     min-height: 16.666vw;
     height: 16.666vw;
   }
 
   .live-container {
-    position: fixed;
-    bottom: 0;
+    /*position: fixed;*/
+    /*bottom: 0;*/
   }
 
-  .pixels-container, .colorpicker-container, .user-controls-container, .knob-container {
+  .pixels-container, .colorpicker-container, .knob-container {
     height:  20vw;
   }
 
@@ -232,9 +238,12 @@ div.knob-container label {
   }
 
   .user-controls-container {
-    position: fixed;
-    bottom: 0;
-    padding-bottom: 22vw;
+
+    position: absolute;
+    bottom: 24vh;
+
+    /*height: 16em;*/
+    /*padding-bottom: 20em;*/
   }
 
   div.knob-container {
@@ -243,16 +252,21 @@ div.knob-container label {
 
   .button {
     width: 20vw;
+    height: 8vh;
   }
 
-
   label.simple-control {
+    white-space: nowrap;
     text-align: center;
     font-size: 0.7em;
     overflow-x: hidden;
     display: inline-block;
     min-width: 16vw;
     width: 16vw;
+  }
+
+  label.simple-control.wide {
+    width: 25vw;
   }
 
   .simple-control button {
@@ -262,16 +276,24 @@ div.knob-container label {
     display: block;
   }
 
+  .simple-control.wide button {
+    width:  22vw;
+  }
+
   .sequencer-button {
     height: 6vh;
   }
 
   #transport {
+    position: fixed;
+    bottom: 0;
     display: block;
   }
 
 
   #simple {
+    /*position: absolute;*/
+    /*padding-bottom: 20vh;*/
     display: block;
   }
 }

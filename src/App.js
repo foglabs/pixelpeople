@@ -38,7 +38,7 @@ window.onbeforeunload = function() {
   client.close();
 }
 
-const COLORS = [ "red", "red-orange", "orange", "orange-yellow", "yellow", "yellow-green", "green", "green-blue", "blue", "blue-violet", "violet", "violet-red",]
+// const COLORS = [ "red", "red-orange", "orange", "orange-yellow", "yellow", "yellow-green", "green", "green-blue", "blue", "blue-violet", "violet", "violet-red"]
 const SCHEMEMODE0 = 0
 const SCHEMEMODE1 = 1
 
@@ -56,7 +56,7 @@ class App extends Component {
       // kind of stupid but easier to track v
       synthsPlaying: [],
       playing: false,
-      masterGain: 0.035,
+      masterGain: 0.12,
       masterSequencerSteps: new Array(this.sequencerTrackLength).fill(true),
       randomizePixels: false,
       randomizePixelsInterval: 3600,
@@ -66,7 +66,11 @@ class App extends Component {
       
       online: true,
       userID: false,
-      userColor: false
+      userColor: false,
+
+      heldDown: false,
+      holdTimer: false,
+      holdFactor: 1
     }
 
     this.toggleMasterSequencerStep = this.toggleMasterSequencerStep.bind(this)
@@ -74,6 +78,8 @@ class App extends Component {
     this.removePixel = this.removePixel.bind(this)
     this.changeMasterGain = this.changeMasterGain.bind(this)
     this.changeColor = this.changeColor.bind(this)
+
+    this.stopHoldDown = this.stopHoldDown.bind(this)
   }
 
   componentDidMount(props){
@@ -93,6 +99,7 @@ class App extends Component {
       this.updateSounds()
       this.setColorScheme(this.state.pixels)
 
+      this.changeMasterGain(this.state.masterGain)
       this.changeTempo(this.state.tempo)
       this.changeNoteLength(this.state.noteLength)
       this.changeSemitoneShift(this.state.semitoneShift)
@@ -142,6 +149,34 @@ class App extends Component {
         }
       }, 60)
     })
+  }
+
+  startHoldDown(funcName, fieldName, increment){
+    console.log( 'do i even' )
+    // this.setState({holdDownField: "tempo", )
+
+    if(this.state.holdDown != fieldName){
+      var holdTimer = setInterval( () => {
+
+        console.log( 'holding down... ', funcName, fieldName, increment )
+        // let data = {}
+        // data[fieldName] = this.state[fieldName] + increment
+        // this.setState({data})
+
+        // run the changer function every 1s
+        this[funcName](this.state[fieldName] + increment*this.state.holdFactor)
+        this.setState({holdFactor: this.state.holdFactor+1})
+      }, 200 )
+
+      this.setState({holdDown: fieldName, holdTimer: holdTimer})  
+    }
+    
+  }
+
+  stopHoldDown(){
+    // clear interval
+    clearInterval(this.state.holdTimer)
+    this.setState({holdTimer: false, holdDown: false, holdFactor: 1})
   }
 
   setupSocketEvents(){
@@ -426,8 +461,12 @@ class App extends Component {
     }
   }
 
+  rainbow(){
+    return [ "red", "red-orange", "orange", "orange-yellow", "yellow", "yellow-green", "green", "green-blue", "blue", "blue-violet", "violet", "violet-red"]
+  }
+
   randomColor(){
-    return COLORS.sort(() => Math.random() - 0.5)[0]
+    return this.rainbow().sort(() => Math.random() - 0.5)[0]
   }
 
   randomWaveform(){
@@ -561,7 +600,10 @@ class App extends Component {
   }
 
   changeMasterGain(newGain){
-    if(newGain === 0 || newGain > 0){
+    if(!(newGain > 0)){
+      newGain = 0.00001
+    }
+    if(newGain > 0){
       this.setState({masterGain: newGain}, () => {
         this.gainNode.gain.exponentialRampToValueAtTime(newGain, this.audioContext.currentTime+0.08)
       })
@@ -569,18 +611,19 @@ class App extends Component {
   }
 
   changeNoteLength(length){
+    if(!(length > 0)){
+      length = 0.00001
+    }
+
     this.setState({noteLength: length}, () => {
-  
-      if(length > 0){
-        let synths = this.state.synths
-        let a,h,r
-        a = length * 0.10
-        h = length * 0.40
-        r = length * 0.20
-        synths.map( (synth) => {
-          synth.setNoteLength(a,h,r)
-        })
-      }
+      let synths = this.state.synths
+      let a,h,r
+      a = length * 0.10
+      h = length * 0.40
+      r = length * 0.20
+      synths.map( (synth) => {
+        synth.setNoteLength(a,h,r)
+      })
 
     })
 
@@ -924,12 +967,12 @@ class App extends Component {
   }
 
   distanceBetweenColors(color1, color2){
-    var colors = COLORS
+    var colors = this.rainbow()
     let ci1, ci2
     ci1 = colors.indexOf(color1)
     ci2 = colors.indexOf(color2)
     // check to left and right
-    return Math.min( Math.abs(ci1 - ci2), ( COLORS.length-Math.abs(ci1 - ci2) ) )
+    return Math.min( Math.abs(ci1 - ci2), ( this.rainbow().length-Math.abs(ci1 - ci2) ) )
   }
 
   shuffle(array) {
@@ -1019,6 +1062,15 @@ class App extends Component {
 
     seqWorker.postMessage({stop: true})
     this.setState({playing: false})
+  }
+
+  hexToRgb(hex) {
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : null;
   }
 
   render(){
@@ -1289,7 +1341,12 @@ class App extends Component {
       colorPalette = <ColorPicker colorNameToHex={ this.colorNameToHex } changeColor={ this.changeColor } />
     } else {
       // add extra colors offline
-      colorPalette = COLORS.map( (color) => <Pixel color={ this.colorNameToHex(color) } onClick={ () => { this.addPixel(color) } } /> )
+      let colors = this.rainbow().map( (color) => <Pixel color={ this.colorNameToHex(color) } onClick={ () => { this.addPixel(color) } } /> )
+      colorPalette = (
+        <div className="color-picker">
+          { colors }
+        </div>
+      )
     }
 
     let liveText, liveClasses, liveContainer
@@ -1317,8 +1374,32 @@ class App extends Component {
       stopButtonClasses += " white-border"
     }
 
+    let simpleControlClasses = "simple-control"
+    let randomizePixelsIntervalControl, numPixControl
     if(this.state.randomizePixels){
       randButtonClasses += " white-border"
+
+      randomizePixelsIntervalControl = (
+        <label class="simple-control">
+          <button onTouchStart={ () => this.startHoldDown("changeRandomizePixelsInterval", "randomizePixelsInterval", 100) } onTouchEnd={ this.stopHoldDown } onMouseDown={ () => this.startHoldDown("changeRandomizePixelsInterval", "randomizePixelsInterval", 100) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeRandomizePixelsInterval(this.state.randomizePixelsInterval+100) } >▲</button>
+          <button onTouchStart={ () => this.startHoldDown("changeRandomizePixelsInterval", "randomizePixelsInterval", -100) } onTouchEnd={ this.stopHoldDown } onMouseDown={ () => this.startHoldDown("changeRandomizePixelsInterval", "randomizePixelsInterval", -100) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeRandomizePixelsInterval(this.state.randomizePixelsInterval-100) } >▼</button>
+          <div>RANDOM INTERVAL</div>
+          <div>{ this.state.randomizePixelsInterval }</div>
+        </label>
+      )
+
+      numPixControl = (
+        <label class="simple-control">
+          <button onTouchStart={ () => this.startHoldDown("changeNumPix", "numPix", 1) } onTouchEnd={ this.stopHoldDown }  onMouseDown={ () => this.startHoldDown("changeNumPix", "numPix", 1) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeNumPix(this.state.numPix+1) } >▲</button>
+          <button onTouchStart={ () => this.startHoldDown("changeNumPix", "numPix", -1) } onTouchEnd={ this.stopHoldDown }  onMouseDown={ () => this.startHoldDown("changeNumPix", "numPix", -1) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeNumPix(this.state.numPix-1) } >▼</button>
+          <div>RANDOM NUM TO ADD</div>
+          <div>{ this.state.numPix }</div>
+        </label>
+      )
+
+    } else {
+      // if not randiom, add wide class to simple control classes
+      simpleControlClasses += " wide"
     }
 
     if(this.state.schemeMode === SCHEMEMODE0){
@@ -1350,45 +1431,34 @@ class App extends Component {
           </span>
 
           <span id="simple">
-            <label class="simple-control">
-              <button onClick={ () => this.changeMasterGain(this.state.masterGain+0.01) } >▲</button>
-              <button onClick={ () => this.changeMasterGain(this.state.masterGain-0.01) } >▼</button>
-              <div>masterGain</div>
+            <label class={ simpleControlClasses }>
+              <button onTouchStart={ () => this.startHoldDown("changeMasterGain", "masterGain", 0.02) } onTouchEnd={ this.stopHoldDown } onMouseDown={ () => this.startHoldDown("changeMasterGain", "masterGain", 0.02) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeMasterGain(this.state.masterGain+0.02) } >▲</button>
+              <button onTouchStart={ () => this.startHoldDown("changeMasterGain", "masterGain", -0.02) } onTouchEnd={ this.stopHoldDown } onMouseDown={ () => this.startHoldDown("changeMasterGain", "masterGain", -0.02) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeMasterGain(this.state.masterGain-0.02) } >▼</button>
+              <div>VOLUME</div>
               <div>{ this.state.masterGain }</div>
             </label>
 
-            <label class="simple-control">
-              <button onClick={ () => this.changeTempo(this.state.tempo+1) } >▲</button>
-              <button onClick={ () => this.changeTempo(this.state.tempo-1) } >▼</button>
-              <div>tempo</div>
+            <label class={ simpleControlClasses }>
+              <button onTouchStart={ () => this.startHoldDown("changeTempo", "tempo", 1) } onTouchEnd={ this.stopHoldDown } onMouseDown={ () => this.startHoldDown("changeTempo", "tempo", 1) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeTempo(this.state.tempo+1) } >▲</button>
+              <button onTouchStart={ () => this.startHoldDown("changeTempo", "tempo", -1) } onTouchEnd={ this.stopHoldDown } onMouseDown={ () => this.startHoldDown("changeTempo", "tempo", -1) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeTempo(this.state.tempo-1) } >▼</button>
+              <div>TEMPO</div>
               <div>{ this.state.tempo }</div>
             </label>
 
-            <label class="simple-control">
-              <button onClick={ () => this.changeRandomizePixelsInterval(this.state.randomizePixelsInterval+100) } >▲</button>
-              <button onClick={ () => this.changeRandomizePixelsInterval(this.state.randomizePixelsInterval-100) } >▼</button>
-              <div>randPix</div>
-              <div>{ this.state.randomizePixelsInterval }</div>
-            </label>
+            { numPixControl }
+            { randomizePixelsIntervalControl }
 
-            <label class="simple-control">
-              <button onClick={ () => this.changeNumPix(this.state.numPix+1) } >▲</button>
-              <button onClick={ () => this.changeNumPix(this.state.numPix-1) } >▼</button>
-              <div>numPix</div>
-              <div>{ this.state.numPix }</div>
-            </label>
-
-            <label class="simple-control">
-              <button onClick={ () => this.changeNoteLength(this.state.noteLength+0.1) } >▲</button>
-              <button onClick={ () => this.changeNoteLength(this.state.noteLength-0.1) } >▼</button>
-              <div>noteLength</div>
+            <label class={ simpleControlClasses }>
+              <button onTouchStart={ () => this.startHoldDown("changeNoteLength", "noteLength", 0.08) } onTouchEnd={ this.stopHoldDown } onMouseDown={ () => this.startHoldDown("changeNoteLength", "noteLength", 0.08) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeNoteLength(this.state.noteLength+0.08) } >▲</button>
+              <button onTouchStart={ () => this.startHoldDown("changeNoteLength", "noteLength", -0.08) } onTouchEnd={ this.stopHoldDown } onMouseDown={ () => this.startHoldDown("changeNoteLength", "noteLength", -0.08) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeNoteLength(this.state.noteLength-0.08) } >▼</button>
+              <div>NOTE LENGTH</div>
               <div>{ this.state.noteLength }</div>
             </label>
 
-            <label class="simple-control">
-              <button onClick={ () => this.changeSemitoneShift(this.state.semitoneShift+1) } >▲</button>
-              <button onClick={ () => this.changeSemitoneShift(this.state.semitoneShift-1) } >▼</button>
-              <div>semitoneShift</div>
+            <label class={ simpleControlClasses }>
+              <button onTouchStart={ () => this.startHoldDown("changeSemitoneShift", "semitoneShift", 1) } onTouchEnd={ this.stopHoldDown } onMouseDown={ () => this.startHoldDown("changeSemitoneShift", "semitoneShift", 1) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeSemitoneShift(this.state.semitoneShift+1) } >▲</button>
+              <button onTouchStart={ () => this.startHoldDown("changeSemitoneShift", "semitoneShift", -1) } onTouchEnd={ this.stopHoldDown } onMouseDown={ () => this.startHoldDown("changeSemitoneShift", "semitoneShift", -1) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeSemitoneShift(this.state.semitoneShift-1) } >▼</button>
+              <div>PITCH</div>
               <div>{ this.state.semitoneShift }</div>
             </label>
 
@@ -1407,9 +1477,7 @@ class App extends Component {
        
         <MasterSequencer toggleMasterSequencerStep={ this.toggleMasterSequencerStep } steps={ this.state.masterSequencerSteps } />
 
-
         { liveContainer }
-
 
         <div className="soundshower-container">
           { soundShows }
