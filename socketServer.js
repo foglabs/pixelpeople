@@ -7,6 +7,9 @@ const clients = {};
 
 const COLORS = [ "red", "red-orange", "orange", "orange-yellow", "yellow", "yellow-green", "green", "green-blue", "blue", "blue-violet", "violet", "violet-red"]
 
+var groupModeEnabled = false
+var groupMasterUserID = false
+
 // This code generates unique userid for every beepr
 function getUniqueID() {
   const s4 = () => Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
@@ -14,6 +17,7 @@ function getUniqueID() {
 }
 
 function randomColor(){
+  // this mutates the muphuckin array but it doesnt matter
   return COLORS.sort(() => Math.random() - 0.5)[0]
 }
 
@@ -23,9 +27,9 @@ function deleteClient(userID){
 }
 
 function updatePixels(){
-  let pixelColors = Object.keys(clients).map( (userID) => {
+  let pixelData = Object.keys(clients).map( (userID) => {
     if(clients[userID]){
-      return clients[userID].pixelColor
+      return { color: clients[userID].pixelColor, userID: userID }
     }
   })
 
@@ -33,9 +37,26 @@ function updatePixels(){
     // update each client on current colors
     console.log( 'updating colors for ', userID )
 
-    let data = {userID: userID, pixelColors: pixelColors}
+    let data = {userID: userID, userColor: clients[userID].pixelColor, pixelData: pixelData }
 
     sendDataToClient(userID, data)
+  })
+}
+
+function startGroupMode(masterUserID){
+  groupModeEnabled = true
+  groupMasterUserID = masterUserID
+  Object.keys(clients).forEach( (userID) => {
+    let data = {userID: userID, groupMode: "start", groupMasterID: groupMasterUserID}
+    sendDataToClient(userID, data)   
+  })
+}
+
+function stopGroupMode(){
+  groupModeEnabled = false
+  Object.keys(clients).forEach( (userID) => {
+    let data = {userID: userID, groupMode: "stop", groupMasterID: false}
+    sendDataToClient(userID, data)   
   })
 }
 
@@ -74,6 +95,11 @@ wsServer.on('request', function(request) {
   // init rand color for new user, will be sent when we 
   clients[userID].pixelColor = randomColor()
   clients[userID].lives = 2
+
+  if(groupModeEnabled){
+    sendDataToClient(userID, {groupMode: "start", groupMasterID: groupMasterUserID})
+  }
+
   // tell the new client who they is and what the pixels are
   updatePixels()
 
@@ -119,7 +145,7 @@ wsServer.on('request', function(request) {
 
         if(data.pong){
           // client responded to our ping!!!
-          console.log( 'received pong from client ', data.userID )
+          // console.log( 'received pong from client ', data.userID )
           if(clients[data.userID].lives < 8){
             clients[data.userID].lives += 1
           }
@@ -132,6 +158,16 @@ wsServer.on('request', function(request) {
           } else if(data.disconnect){
             console.log( 'disconnect ', data.userID )
             deleteClient(data.userID)
+          } else if(data.groupMode){
+            if(data.groupMode === "start"){
+              // silence all users other than sender
+              console.log( 'starting groupmode with master ', data.userID )
+              startGroupMode(data.userID)
+            } else {
+              // go back to normal
+              console.log( 'stopping groupmode :: master ', data.userID )
+              stopGroupMode()
+            }
           }
 
           // then update everybody with all the colors
@@ -147,7 +183,7 @@ wsServer.on('request', function(request) {
   setInterval(() => {
     let data = {ping: true}
     Object.keys(clients).forEach( (userID) => {
-      console.log( 'sent ping ', userID )
+      // console.log( 'sent ping ', userID )
       sendDataToClient(userID, data)
     })
   }, 2000)

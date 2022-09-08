@@ -1,3 +1,7 @@
+body {
+  background-color: #fff;
+}
+
 .pixels-container {
   width: 100vw;
   line-height: 0;
@@ -8,6 +12,16 @@
   width: 16.666vw;
   min-height: 8.3vw;
   height: 8.3vw;
+}
+
+.pixels-container.big .pixel {
+  width: 16.666vw;
+  height: 16.666vw;
+}
+
+.pixel.border {
+  outline:  5px solid #fff;
+  outline-offset: -5px;
 }
 
 .colorpicker-container {
@@ -176,6 +190,11 @@ div.knob-container label {
   color: #bb0;
 }
 
+.grpp {
+  background-color: #0ff;
+  color: #0bb;
+}
+
 .sequencer-container {
   width: 100vw;
 }
@@ -219,14 +238,19 @@ div.knob-container label {
   }
 
   .pixels-container .color-picker .pixel {
-    width: 16.666vw;
-    min-height: 16.666vw;
-    height: 16.666vw;
+    width: 16.6vw;
+    min-height: 16.6vw;
+    height: 16.6vw;
+  }
+
+  .pixels-container.big .color-picker .pixel {
+    width: 50vw;
+    height: 14.6vh;
   }
 
   .live-container {
-    /*position: fixed;*/
-    /*bottom: 0;*/
+    position: fixed;
+    bottom: 0;
   }
 
   .pixels-container, .colorpicker-container, .knob-container {
@@ -240,9 +264,9 @@ div.knob-container label {
   .user-controls-container {
 
     position: absolute;
-    bottom: 24vh;
+    bottom: 28vh;
 
-    /*height: 16em;*/
+    height: 10vw;
     /*padding-bottom: 20em;*/
   }
 
@@ -252,10 +276,11 @@ div.knob-container label {
 
   .button {
     width: 20vw;
-    height: 8vh;
+    height: 12vh;
   }
 
   label.simple-control {
+    font-weight: bold;
     white-space: nowrap;
     text-align: center;
     font-size: 0.7em;

@@ -185,4 +185,12 @@ synthsPlaying doesnt update colors when using socket pixels
 
 
 
-need to check boundaries on mastergain + others
+*need to check boundaries on mastergain + others
+
+only show big pix when nonmaster groupmode
+figure out good highlight for user selecgted color
+
+
+
+
+

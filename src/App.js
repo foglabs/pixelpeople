@@ -68,6 +68,11 @@ class App extends Component {
       userID: false,
       userColor: false,
 
+      // is the server in group mode
+      groupMode: false,
+      // who is da masta
+      groupMasterID: false,
+
       heldDown: false,
       holdTimer: false,
       holdFactor: 1
@@ -152,7 +157,6 @@ class App extends Component {
   }
 
   startHoldDown(funcName, fieldName, increment){
-    console.log( 'do i even' )
     // this.setState({holdDownField: "tempo", )
 
     if(this.state.holdDown != fieldName){
@@ -190,7 +194,6 @@ class App extends Component {
       // console.log('da message', message)
       let data = JSON.parse(message.data)
 
-
       if(data.ping){
         console.log( 'sending ping wiht usid', this.state.userID )
         client.send(JSON.stringify({userID: this.state.userID, pong: true}))
@@ -208,7 +211,20 @@ class App extends Component {
         }
 
         // regular pixel update
-        localData.pixels = this.pixelsFromColors(data.pixelColors)
+        if(data.pixelData){
+          localData.pixels = this.pixelsFromColors(data.pixelData)
+        }
+
+        if(data.groupMode){
+          console.log( 'groupmoddata ', data )
+          if(data.groupMode === "start"){
+            console.log( 'starting groupmode with master ', data.groupMasterID )
+            this.setState({groupMode: true, groupMasterID: data.groupMasterID})
+          } else {
+            this.setState({groupMode: false, groupMasterID: false})
+          }
+        }
+
         this.setState(localData, () => {
           this.updateSounds()
           this.setColorScheme(this.state.pixels)
@@ -216,6 +232,10 @@ class App extends Component {
       }
 
     }
+  }
+
+  isMaster(){
+    return (this.state.groupMode && this.state.groupMasterID == this.state.userID)
   }
 
   restartOnline(){
@@ -256,6 +276,14 @@ class App extends Component {
       newSchemeMode = SCHEMEMODE0
     }
     this.setState({schemeMode: newSchemeMode})
+  }
+
+  toggleGroupMode(){
+    // send server start/stop group mode
+    // when starting, server will mute everyone other than the user that sent this
+
+    let groupModeValue = this.state.groupMode ? "stop" : "start"
+    client.send(JSON.stringify({userID: this.state.userID, groupMode: groupModeValue}))
   }
 
   toggleOnline(){
@@ -539,8 +567,9 @@ class App extends Component {
     })
   }
 
-  pixelsFromColors(colors){
-    return colors.map(color => this.newPixel(color))
+  pixelsFromColors(colorDatas){
+    console.log( 'coldsa ', colorDatas )
+    return colorDatas.map(colorData => this.newPixel(colorData.color, colorData.userID))
   }
 
   getPixels(){
@@ -630,11 +659,16 @@ class App extends Component {
     
   }
 
-  newPixel(color=null){
+  newPixel(color=null, userID=null){
     var pix = {}
     pix.color = color || this.randomColor()
     pix.gain = 0.4
     pix.clientId = Math.floor( Math.random() * 100 )
+
+    if(userID) {
+      pix.userID = userID
+    }
+
     return pix
   }
 
@@ -1332,13 +1366,13 @@ class App extends Component {
 
     let pixels
     if(this.state.pixels){
-      pixels = this.state.pixels.map( (pixel, index) => { return <Pixel onClick={ () => { this.removePixel(index) } } color={ this.colorNameToHex(pixel.color) } /> })
+      pixels = this.state.pixels.map( (pixel, index) => { return <Pixel onClick={ () => { this.removePixel(index) } } color={ this.colorNameToHex(pixel.color) } border={ this.state.userID === pixel.userID } /> })
     }
 
     let colorPalette
     if(this.state.online){
       // change your color online
-      colorPalette = <ColorPicker colorNameToHex={ this.colorNameToHex } changeColor={ this.changeColor } />
+      colorPalette = <ColorPicker userColor={ this.state.userColor } colorNameToHex={ this.colorNameToHex } changeColor={ this.changeColor } />
     } else {
       // add extra colors offline
       let colors = this.rainbow().map( (color) => <Pixel color={ this.colorNameToHex(color) } onClick={ () => { this.addPixel(color) } } /> )
@@ -1367,6 +1401,7 @@ class App extends Component {
     let randButtonClasses = buttonClasses + "rand"
     let schmButtonClasses = buttonClasses + "schm"
     let fnetButtonClasses = buttonClasses + "fnet"
+    let grppButtonClasses = buttonClasses + "grpp"
 
     if(this.state.playing){
       playButtonClasses += " white-border"
@@ -1412,13 +1447,31 @@ class App extends Component {
       fnetButtonClasses += " white-border"
     }
 
-    return (
-      <div className="container">
+    if(this.state.groupMode === true){
+      grppButtonClasses += " white-border"
+    }
 
-        <div className="pixels-container">
-          { colorPalette }
-        </div>
 
+    let transportButtons = [<div onClick={ () => { this.playSounds() } } className={playButtonClasses}>PLAY</div>, <div onClick={ () => { this.stopSounds() } } className={stopButtonClasses}>STOP</div>, <div onClick={ () => { this.incrementSchemeMode() } }  className={schmButtonClasses}>SCHM</div>, <div onClick={ () => { this.toggleOnline() } }  className={fnetButtonClasses}>FNET</div> ]
+
+
+    if(this.state.online){
+      // show group mode toggle only when we're online
+      transportButtons.push(<div onClick={ () => { this.toggleGroupMode() } }  className={grppButtonClasses}>GRPP</div>)
+    } else {
+      // only show rand button in offline
+      transportButtons.push(<div onClick={ () => { this.toggleRandomizePixels() } }  className={randButtonClasses}>RAND</div>)
+
+    }
+    let transportButtonsContainer = (
+      <span id="transport">
+        { transportButtons }
+      </span>
+    )
+
+    let userControls, masterSequencer, soundShowsContainer, pixelsContainer
+    if( !this.state.online || !this.state.groupMode || this.isMaster() ){
+      userControls = (
         <div className="user-controls-container">
 
           <span id="knobs">
@@ -1463,30 +1516,49 @@ class App extends Component {
             </label>
 
           </span>
-
-
-          <span id="transport">
-            <div onClick={ () => { this.playSounds() } } className={playButtonClasses}>PLAY</div>
-            <div onClick={ () => { this.stopSounds() } } className={stopButtonClasses}>STOP</div>
-            <div onClick={ () => { this.toggleRandomizePixels() } }  className={randButtonClasses}>RAND</div>
-            <div onClick={ () => { this.incrementSchemeMode() } }  className={schmButtonClasses}>SCHM</div>
-            <div onClick={ () => { this.toggleOnline() } }  className={fnetButtonClasses}>FNET</div>
-          </span>
-
         </div>
-       
+      )
+
+      masterSequencer = (
         <MasterSequencer toggleMasterSequencerStep={ this.toggleMasterSequencerStep } steps={ this.state.masterSequencerSteps } />
+      )
 
-        { liveContainer }
-
+      soundShowsContainer = (
         <div className="soundshower-container">
           { soundShows }
         </div>
+      )
 
-
+      pixelsContainer = (
         <div className="pixels-container">
           { pixels }
         </div>
+      )
+    }
+
+    let colorPaletteClasses = "pixels-container"
+    if(this.state.online && this.state.groupMode && !this.isMaster()){
+      colorPaletteClasses += " big"
+    }
+
+    return (
+      <div className="container">
+
+        <div className={ colorPaletteClasses } >
+          { colorPalette }
+        </div>
+
+        { userControls }
+        
+        { transportButtonsContainer }
+
+        { masterSequencer }
+
+        { liveContainer }
+
+        { soundShowsContainer }
+
+        { pixelsContainer }
       </div>
     )  
   }

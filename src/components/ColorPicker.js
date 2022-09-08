@@ -5,7 +5,7 @@ function ColorPicker(props){
 
   const COLORS = [ "red", "red-orange", "orange", "orange-yellow", "yellow", "yellow-green", "green", "green-blue", "blue", "blue-violet", "violet", "violet-red"]
 
-  let pixels = COLORS.map( color => <Pixel style={{ border: (color == props.userColor ? "1px solid black" : "none") }} onClick={ () => props.changeColor(color) } color={ props.colorNameToHex(color) } /> )
+  let pixels = COLORS.map( color => <Pixel border={ color == props.userColor } onClick={ () => props.changeColor(color) } color={ props.colorNameToHex(color) } /> )
 
   return(
     <div className="color-picker">
