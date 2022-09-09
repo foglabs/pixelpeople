@@ -219,9 +219,17 @@ class App extends Component {
           console.log( 'groupmoddata ', data )
           if(data.groupMode === "start"){
             console.log( 'starting groupmode with master ', data.groupMasterID )
+
             this.setState({groupMode: true, groupMasterID: data.groupMasterID})
+
+            if(data.groupMasterID !== this.state.userID){
+              this.changeMasterGain(0)
+            }
+
           } else {
             this.setState({groupMode: false, groupMasterID: false})
+            this.changeMasterGain(this.state.masterGain)
+
           }
         }
 
@@ -1415,7 +1423,7 @@ class App extends Component {
       randButtonClasses += " white-border"
 
       randomizePixelsIntervalControl = (
-        <label class="simple-control">
+        <label className="simple-control">
           <button onTouchStart={ () => this.startHoldDown("changeRandomizePixelsInterval", "randomizePixelsInterval", 100) } onTouchEnd={ this.stopHoldDown } onMouseDown={ () => this.startHoldDown("changeRandomizePixelsInterval", "randomizePixelsInterval", 100) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeRandomizePixelsInterval(this.state.randomizePixelsInterval+100) } >▲</button>
           <button onTouchStart={ () => this.startHoldDown("changeRandomizePixelsInterval", "randomizePixelsInterval", -100) } onTouchEnd={ this.stopHoldDown } onMouseDown={ () => this.startHoldDown("changeRandomizePixelsInterval", "randomizePixelsInterval", -100) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeRandomizePixelsInterval(this.state.randomizePixelsInterval-100) } >▼</button>
           <div>RANDOM INTERVAL</div>
@@ -1424,7 +1432,7 @@ class App extends Component {
       )
 
       numPixControl = (
-        <label class="simple-control">
+        <label className="simple-control">
           <button onTouchStart={ () => this.startHoldDown("changeNumPix", "numPix", 1) } onTouchEnd={ this.stopHoldDown }  onMouseDown={ () => this.startHoldDown("changeNumPix", "numPix", 1) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeNumPix(this.state.numPix+1) } >▲</button>
           <button onTouchStart={ () => this.startHoldDown("changeNumPix", "numPix", -1) } onTouchEnd={ this.stopHoldDown }  onMouseDown={ () => this.startHoldDown("changeNumPix", "numPix", -1) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeNumPix(this.state.numPix-1) } >▼</button>
           <div>RANDOM NUM TO ADD</div>
@@ -1484,14 +1492,14 @@ class App extends Component {
           </span>
 
           <span id="simple">
-            <label class={ simpleControlClasses }>
+            <label className={ simpleControlClasses }>
               <button onTouchStart={ () => this.startHoldDown("changeMasterGain", "masterGain", 0.02) } onTouchEnd={ this.stopHoldDown } onMouseDown={ () => this.startHoldDown("changeMasterGain", "masterGain", 0.02) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeMasterGain(this.state.masterGain+0.02) } >▲</button>
               <button onTouchStart={ () => this.startHoldDown("changeMasterGain", "masterGain", -0.02) } onTouchEnd={ this.stopHoldDown } onMouseDown={ () => this.startHoldDown("changeMasterGain", "masterGain", -0.02) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeMasterGain(this.state.masterGain-0.02) } >▼</button>
               <div>VOLUME</div>
               <div>{ this.state.masterGain }</div>
             </label>
 
-            <label class={ simpleControlClasses }>
+            <label className={ simpleControlClasses }>
               <button onTouchStart={ () => this.startHoldDown("changeTempo", "tempo", 1) } onTouchEnd={ this.stopHoldDown } onMouseDown={ () => this.startHoldDown("changeTempo", "tempo", 1) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeTempo(this.state.tempo+1) } >▲</button>
               <button onTouchStart={ () => this.startHoldDown("changeTempo", "tempo", -1) } onTouchEnd={ this.stopHoldDown } onMouseDown={ () => this.startHoldDown("changeTempo", "tempo", -1) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeTempo(this.state.tempo-1) } >▼</button>
               <div>TEMPO</div>
@@ -1501,14 +1509,14 @@ class App extends Component {
             { numPixControl }
             { randomizePixelsIntervalControl }
 
-            <label class={ simpleControlClasses }>
+            <label className={ simpleControlClasses }>
               <button onTouchStart={ () => this.startHoldDown("changeNoteLength", "noteLength", 0.08) } onTouchEnd={ this.stopHoldDown } onMouseDown={ () => this.startHoldDown("changeNoteLength", "noteLength", 0.08) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeNoteLength(this.state.noteLength+0.08) } >▲</button>
               <button onTouchStart={ () => this.startHoldDown("changeNoteLength", "noteLength", -0.08) } onTouchEnd={ this.stopHoldDown } onMouseDown={ () => this.startHoldDown("changeNoteLength", "noteLength", -0.08) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeNoteLength(this.state.noteLength-0.08) } >▼</button>
               <div>NOTE LENGTH</div>
               <div>{ this.state.noteLength }</div>
             </label>
 
-            <label class={ simpleControlClasses }>
+            <label className={ simpleControlClasses }>
               <button onTouchStart={ () => this.startHoldDown("changeSemitoneShift", "semitoneShift", 1) } onTouchEnd={ this.stopHoldDown } onMouseDown={ () => this.startHoldDown("changeSemitoneShift", "semitoneShift", 1) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeSemitoneShift(this.state.semitoneShift+1) } >▲</button>
               <button onTouchStart={ () => this.startHoldDown("changeSemitoneShift", "semitoneShift", -1) } onTouchEnd={ this.stopHoldDown } onMouseDown={ () => this.startHoldDown("changeSemitoneShift", "semitoneShift", -1) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeSemitoneShift(this.state.semitoneShift-1) } >▼</button>
               <div>PITCH</div>
@@ -1530,7 +1538,7 @@ class App extends Component {
       )
 
       pixelsContainer = (
-        <div className="pixels-container">
+        <div className="pixels-container graph">
           { pixels }
         </div>
       )

@@ -7,6 +7,13 @@ body {
   line-height: 0;
 }
 
+.pixels-container.graph {
+  background-size: 8.3vw 8.3vw;
+  background-image:
+  linear-gradient(to right, #eee 4px, transparent 4px),
+  linear-gradient(to bottom, #eee 4px, transparent 4px);
+}
+
 .pixel {
   display: inline-block;
   width: 16.666vw;

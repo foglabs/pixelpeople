@@ -54,6 +54,7 @@ function startGroupMode(masterUserID){
 
 function stopGroupMode(){
   groupModeEnabled = false
+  groupMasterUserID = false
   Object.keys(clients).forEach( (userID) => {
     let data = {userID: userID, groupMode: "stop", groupMasterID: false}
     sendDataToClient(userID, data)   
