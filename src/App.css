@@ -1,5 +1,11 @@
-body {
+.container {
   background-color: #fff;
+  width: 100vw;
+  height: 100vh;
+}
+
+.container.dark-mode {
+  background-color: #000;
 }
 
 .pixels-container {
@@ -12,6 +18,12 @@ body {
   background-image:
   linear-gradient(to right, #eee 4px, transparent 4px),
   linear-gradient(to bottom, #eee 4px, transparent 4px);
+}
+
+.container.dark-mode .pixels-container.graph {
+ background-image:
+  linear-gradient(to right, #080808 4px, transparent 4px),
+  linear-gradient(to bottom, #080808 4px, transparent 4px); 
 }
 
 .pixel {
@@ -29,6 +41,11 @@ body {
 .pixel.border {
   outline:  5px solid #fff;
   outline-offset: -5px;
+  z-index: 1000;
+}
+
+.container.dark-mode .pixel.border {
+  outline:  5px solid #000;
 }
 
 .colorpicker-container {
@@ -86,43 +103,51 @@ div.knob-container label {
   animation: live-animation 8s ease-in-out infinite alternate;
 }
 
-@keyframes live-animation {
+.container.dark-mode .live-container.live {
+  color: #200;
+
+  -webkit-animation: dark-live-animation 8s ease-in-out infinite alternate;
+  -moz-animation: dark-live-animation 8s ease-in-out infinite alternate;
+  animation: dark-live-animation 8s ease-in-out infinite alternate;
+}
+
+@keyframes dark-live-animation {
   0% {
-    background-color: #152832;
-    color: #ff2832;
+    background-color: #000004;
+    color: #a00;
   }
   15% {
-    background-color: #263943;
-    color: #ff3943;
+    background-color: #000016;
+    color: #a00;
   }
   25% {
-    background-color: #374105;
-    color: #ff4105;
+    background-color: #000005;
+    color: #a00;
   }
   40% {
-    background-color: #485116;
-    color: #ff5116;
+    background-color: #000016;
+    color: #a00;
   }
   50% {
-    background-color: #220090;
-    color: #ff5116;
+    background-color: #000020;
+    color: #a00;
   }
 
   75% {
-    background-color: #610713;
-    color: #ff0713;
+    background-color: #000013;
+    color: #a00;
   }
   80% {
-    background-color: #711814;
-    color: #ff1814;
+    background-color: #000014;
+    color: #a00;
   }
   95% {
-    background-color: #812915;
-    color: #ff2915;
+    background-color: #000015;
+    color: #a00;
   }
   100% {
-    background-color: #913101;
-    color: #ff3101;
+    background-color: #000001;
+    color: #a00;
   }
  
 }
@@ -164,12 +189,24 @@ div.knob-container label {
   box-shadow: 0 0 0 5px #fff;
 }
 
+.container.dark-mode .button.white-border {
+  box-shadow: 0 0 0 5px #222;
+}
+
 .button.green-border {
   box-shadow: 0 0 0 5px #0f0;
 }
 
+.container.dark-mode .button.green-border {
+  box-shadow: 0 0 0 5px #020;
+}
+
 .button:active {
   box-shadow: 0 0 0 5px #fff;
+}
+
+.container.dark-mode .button:active {
+  box-shadow: 0 0 0 5px #222;
 }
 
 .play {
@@ -177,9 +214,17 @@ div.knob-container label {
   color: #0b0;
 }
 
+.container.dark-mode .play {
+  background-color: #020;
+}
+
 .stop{
   background-color: #f00;
   color: #b00;
+}
+
+.container.dark-mode .stop{
+  background-color: #200;
 }
 
 .rand {
@@ -187,9 +232,17 @@ div.knob-container label {
   color: #00b;
 }
 
+.container.dark-mode .rand {
+  background-color: #002;
+}
+
 .schm {
   background-color: #f0f;
   color: #b0b;
+}
+
+.container.dark-mode .schm {
+  background-color: #202;
 }
 
 .fnet {
@@ -197,19 +250,39 @@ div.knob-container label {
   color: #bb0;
 }
 
+.container.dark-mode .fnet {
+  background-color: #220;
+}
+
 .grpp {
   background-color: #0ff;
   color: #0bb;
 }
 
+.container.dark-mode .grpp {
+  background-color: #022;
+}
+
+.dark {
+  background-color: #000;
+  color: #eee;
+}
+
+
 .sequencer-container {
   width: 100vw;
 }
+
 .sequencer-button {
-  border: 1px solid white;
+  border: 1px solid #fff;
   width: 6.25%;
   height: 2vh;
   min-height: 20px;
+}
+
+.container.dark-mode .sequencer-button {
+  border: 1px solid #000;
+  background-color: #000;
 }
 
 .enable {
@@ -295,8 +368,12 @@ div.knob-container label {
     display: inline-block;
     min-width: 16vw;
     width: 16vw;
+    color:  #000;
   }
 
+  .container.dark-mode label.simple-control {
+    color: #aaa;
+  }
   label.simple-control.wide {
     width: 25vw;
   }
@@ -306,6 +383,12 @@ div.knob-container label {
     width:  12vw;
     height:  12vw;
     display: block;
+  }
+
+  .container.dark-mode .simple-control button {
+    background-color: #333;
+    color: #11;
+    border: #000;
   }
 
   .simple-control.wide button {

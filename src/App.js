@@ -14,6 +14,7 @@ import ColorPicker from "./components/ColorPicker.js"
 import Synth from "./classes/Synth.js"
 import MasterSequencer from "./classes/MasterSequencer.js"
 import ColorScheme from "./classes/ColorScheme.js"
+import SimpleControl from "./classes/SimpleControl.js"
 
 import WorkerBuilder from "./wb.js"
 import SequencerWorker from "./seqWorker.js"
@@ -75,15 +76,21 @@ class App extends Component {
 
       heldDown: false,
       holdTimer: false,
-      holdFactor: 1
+      holdFactor: 0.5,
+
+      darkMode: true
     }
 
     this.toggleMasterSequencerStep = this.toggleMasterSequencerStep.bind(this)
     this.addPixel = this.addPixel.bind(this)
     this.removePixel = this.removePixel.bind(this)
     this.changeMasterGain = this.changeMasterGain.bind(this)
+    this.changeTempo = this.changeTempo.bind(this)
+    this.changeNoteLength = this.changeNoteLength.bind(this)
+    this.changeSemitoneShift = this.changeSemitoneShift.bind(this)
     this.changeColor = this.changeColor.bind(this)
 
+    this.startHoldDown = this.startHoldDown.bind(this)
     this.stopHoldDown = this.stopHoldDown.bind(this)
   }
 
@@ -121,7 +128,10 @@ class App extends Component {
             // play synth now, since seq said so
 
             // console.log( 'playing synth', action.data.playSynth.index )
-            this.state.synths[action.data.playSynth.index].play()
+
+            if(!this.state.groupMode || this.isMaster() ){
+              this.state.synths[action.data.playSynth.index].play()
+            }
           } else if(action.data.randomizePixels){
             if(this.state.playing){
               // get rid of old pixels
@@ -156,21 +166,25 @@ class App extends Component {
     })
   }
 
-  startHoldDown(funcName, fieldName, increment){
+  startHoldDown(daFunc, fieldName, increment, round=false){
     // this.setState({holdDownField: "tempo", )
 
     if(this.state.holdDown != fieldName){
       var holdTimer = setInterval( () => {
 
-        console.log( 'holding down... ', funcName, fieldName, increment )
+        console.log( 'holding down... ', fieldName, increment )
         // let data = {}
         // data[fieldName] = this.state[fieldName] + increment
         // this.setState({data})
 
         // run the changer function every 1s
-        this[funcName](this.state[fieldName] + increment*this.state.holdFactor)
-        this.setState({holdFactor: this.state.holdFactor+1})
-      }, 200 )
+        let change = increment*this.state.holdFactor
+        if(round){
+          change = Math.floor(change)
+        }
+        daFunc(this.state[fieldName] + change)
+        this.setState({holdFactor: this.state.holdFactor*1.3})
+      }, 240 )
 
       this.setState({holdDown: fieldName, holdTimer: holdTimer})  
     }
@@ -178,7 +192,6 @@ class App extends Component {
   }
 
   stopHoldDown(){
-    // clear interval
     clearInterval(this.state.holdTimer)
     this.setState({holdTimer: false, holdDown: false, holdFactor: 1})
   }
@@ -329,7 +342,6 @@ class App extends Component {
 
   createSynth(index, gain, wave, freq, attk, hold, rels, color){
     // console.log( 'create synth ', index )
-    // let freq = this.colorNameToFreq(color)
     let synth = new Synth(this.audioContext, this.gainNode, gain, wave, freq, attk, hold, rels)
 
     synth.index = index
@@ -351,6 +363,15 @@ class App extends Component {
   shiftBySemitones(freq, semitones){
     // 2^(s/12)*freq
     return Math.pow(2, (semitones/12) ) * freq
+  }
+
+  getFrequency(colorName){
+    // select which set of frequencies
+    if(this.state.groupMode){
+      return this.colorNameToFriendlyFreq(colorName)
+    } else {
+      return this.colorNameToFreq(colorName)
+    }
   }
 
   colorNameToFreq(colorName){
@@ -378,6 +399,35 @@ class App extends Component {
       return this.shiftBySemitones(1396.9, this.state.semitoneShift)
     } else if(colorName == "violet-red"){
       return this.shiftBySemitones(1568.0, this.state.semitoneShift)
+    }
+  }
+
+  // CDEGA...
+  colorNameToFriendlyFreq(colorName){
+    if(colorName == "red"){
+      return this.shiftBySemitones(523.2511, this.state.semitoneShift)
+    } else if(colorName == "red-orange"){
+      return this.shiftBySemitones(587.3295, this.state.semitoneShift)
+    } else if(colorName == "orange"){
+      return this.shiftBySemitones(659.2551, this.state.semitoneShift)
+    } else if(colorName == "orange-yellow"){
+      return this.shiftBySemitones(783.9909, this.state.semitoneShift)
+    } else if(colorName == "yellow"){
+      return this.shiftBySemitones(880.0000, this.state.semitoneShift)
+    } else if(colorName == "yellow-green"){
+      return this.shiftBySemitones(1046.502, this.state.semitoneShift)      
+    } else if(colorName == "green"){
+      return this.shiftBySemitones(1174.659, this.state.semitoneShift)
+    } else if(colorName == "green-blue"){
+      return this.shiftBySemitones(1318.510, this.state.semitoneShift)
+    } else if(colorName == "blue"){
+      return this.shiftBySemitones(1567.982, this.state.semitoneShift)
+    } else if(colorName == "blue-violet"){
+      return this.shiftBySemitones(1760.000, this.state.semitoneShift)      
+    } else if(colorName == "violet"){
+      return this.shiftBySemitones(2093.005, this.state.semitoneShift)
+    } else if(colorName == "violet-red"){
+      return this.shiftBySemitones(2349.318, this.state.semitoneShift)
     }
 
   }
@@ -410,8 +460,6 @@ class App extends Component {
     }
   }
 
-
-
   colorNameToDarkHex(colorName){
     if(colorName == "red"){
       return "#7f0000"
@@ -438,7 +486,34 @@ class App extends Component {
     } else if(colorName == "violet-red"){
       return "#630a42"
     }
+  }
 
+  colorNameToVeryDarkHex(colorName){
+    if(colorName == "red"){
+      return "#770000"
+    } else if(colorName == "red-orange"){
+      return "#772924"
+    } else if(colorName == "orange"){
+      return "#775200"
+    } else if(colorName == "orange-yellow"){
+      return "#775721"
+    } else if(colorName == "yellow"){
+      return "#777700"
+    } else if(colorName == "yellow-green"){
+      return "#567717"
+    } else if(colorName == "green"){
+      return "#007700"
+    } else if(colorName == "green-blue"){
+      return "#246866"
+    } else if(colorName == "blue"){
+      return "#000077"
+    } else if(colorName == "blue-violet"){
+      return "#451571"
+    } else if(colorName == "violet"){
+      return "#774177"
+    } else if(colorName == "violet-red"){
+      return "#630442"
+    }
   }
 
   colorNameToInt(colorName){
@@ -620,9 +695,12 @@ class App extends Component {
 
   changeTempo(newTempo){
     let stepTime = this.tempoToStepTime(newTempo)
-    this.setState({tempo: newTempo}, () => {
-      seqWorker.postMessage({changeTempo: {value: stepTime} })
-    })
+    if(newTempo >= 0){
+      this.setState({tempo: newTempo}, () => {
+        seqWorker.postMessage({changeTempo: {value: stepTime} })
+      })  
+    }
+    
   }
 
   changeSemitoneShift(newSemitoneShift){
@@ -630,7 +708,7 @@ class App extends Component {
       let synths = this.state.synths
       // change playing synths to new freq
       for(var i=0; i<synths.length; i++){
-        synths[i].update( this.colorNameToFreq(synths[i].color) )
+        synths[i].update( this.getFrequency(synths[i].color) )
       }
 
     })
@@ -715,14 +793,14 @@ class App extends Component {
           // existing synth, ramp instead
 
           synth = this.state.synths[index]
-          synth.update( this.colorNameToFreq(pixel.color) )
+          synth.update( this.getFrequency(pixel.color) )
           keepSynthIds.push(synth.id)
           // console.log( 'keeping existing', synth.id )  
         }
         
       } else {
         // new synth
-        synth = this.createSynth(index, pixel.gain, this.randomWaveform(), this.colorNameToFreq(pixel.color), a, h, r, pixel.color)
+        synth = this.createSynth(index, this.state.masterGain, this.randomWaveform(), this.getFrequency(pixel.color), a, h, r, pixel.color)
 
         // console.log( 'i will craete pix synth of color ', pixel.color, ' at index ', index )
         // same order as 
@@ -1071,7 +1149,7 @@ class App extends Component {
 
     console.log( 'fuc, bitch! im makin pattern sound with psi ', index )
 
-    let frequency = this.colorNameToFreq(color) * (numberOfRepeats+1)
+    let frequency = this.getFrequency(color) * (numberOfRepeats+1)
     let a,h,r
     a = this.state.noteLength * 0.10
     h = this.state.noteLength * 0.40
@@ -1116,6 +1194,12 @@ class App extends Component {
   }
 
   render(){
+
+    // its the big app!
+    let containerClasses = "container"
+    if(this.state.darkMode){
+      containerClasses += " dark-mode"
+    }
 
     let tempoKnob = (
       <div className="user-control knob-container">
@@ -1374,16 +1458,20 @@ class App extends Component {
 
     let pixels
     if(this.state.pixels){
-      pixels = this.state.pixels.map( (pixel, index) => { return <Pixel onClick={ () => { this.removePixel(index) } } color={ this.colorNameToHex(pixel.color) } border={ this.state.userID === pixel.userID } /> })
+
+      let colorNameFunc = !this.state.darkMode ? this.colorNameToHex : this.colorNameToVeryDarkHex
+      pixels = this.state.pixels.map( (pixel, index) => { return <Pixel onClick={ () => { this.removePixel(index) } } color={ colorNameFunc(pixel.color) } border={ this.state.userID === pixel.userID } /> })
     }
 
     let colorPalette
+    let colorNameFunc = !this.state.darkMode ? this.colorNameToHex : this.colorNameToVeryDarkHex
     if(this.state.online){
       // change your color online
-      colorPalette = <ColorPicker userColor={ this.state.userColor } colorNameToHex={ this.colorNameToHex } changeColor={ this.changeColor } />
+
+      colorPalette = <ColorPicker userColor={ this.state.userColor } colorNameToHex={ colorNameFunc } changeColor={ this.changeColor } />
     } else {
       // add extra colors offline
-      let colors = this.rainbow().map( (color) => <Pixel color={ this.colorNameToHex(color) } onClick={ () => { this.addPixel(color) } } /> )
+      let colors = this.rainbow().map( (color) => <Pixel color={ colorNameFunc(color) } onClick={ () => { this.addPixel(color) } } /> )
       colorPalette = (
         <div className="color-picker">
           { colors }
@@ -1410,6 +1498,7 @@ class App extends Component {
     let schmButtonClasses = buttonClasses + "schm"
     let fnetButtonClasses = buttonClasses + "fnet"
     let grppButtonClasses = buttonClasses + "grpp"
+    let darkButtonClasses = buttonClasses + "dark"
 
     if(this.state.playing){
       playButtonClasses += " white-border"
@@ -1423,21 +1512,11 @@ class App extends Component {
       randButtonClasses += " white-border"
 
       randomizePixelsIntervalControl = (
-        <label className="simple-control">
-          <button onTouchStart={ () => this.startHoldDown("changeRandomizePixelsInterval", "randomizePixelsInterval", 100) } onTouchEnd={ this.stopHoldDown } onMouseDown={ () => this.startHoldDown("changeRandomizePixelsInterval", "randomizePixelsInterval", 100) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeRandomizePixelsInterval(this.state.randomizePixelsInterval+100) } >▲</button>
-          <button onTouchStart={ () => this.startHoldDown("changeRandomizePixelsInterval", "randomizePixelsInterval", -100) } onTouchEnd={ this.stopHoldDown } onMouseDown={ () => this.startHoldDown("changeRandomizePixelsInterval", "randomizePixelsInterval", -100) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeRandomizePixelsInterval(this.state.randomizePixelsInterval-100) } >▼</button>
-          <div>RANDOM INTERVAL</div>
-          <div>{ this.state.randomizePixelsInterval }</div>
-        </label>
+        <SimpleControl changeFunction={ this.changeRandomizePixelsInterval } startHoldDown={ this.startHoldDown } stopHoldDown={ this.stopHoldDown } classes={ simpleControlClasses } fieldName="randomizePixelsInterval" increment={ 100 } label="RANDOM INTERVAL" value={ this.state.randomizePixelsInterval } /> 
       )
 
       numPixControl = (
-        <label className="simple-control">
-          <button onTouchStart={ () => this.startHoldDown("changeNumPix", "numPix", 1) } onTouchEnd={ this.stopHoldDown }  onMouseDown={ () => this.startHoldDown("changeNumPix", "numPix", 1) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeNumPix(this.state.numPix+1) } >▲</button>
-          <button onTouchStart={ () => this.startHoldDown("changeNumPix", "numPix", -1) } onTouchEnd={ this.stopHoldDown }  onMouseDown={ () => this.startHoldDown("changeNumPix", "numPix", -1) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeNumPix(this.state.numPix-1) } >▼</button>
-          <div>RANDOM NUM TO ADD</div>
-          <div>{ this.state.numPix }</div>
-        </label>
+        <SimpleControl changeFunction={ this.changeNumPix } startHoldDown={ this.startHoldDown } stopHoldDown={ this.stopHoldDown } classes={ simpleControlClasses } fieldName="numPix" increment={ 1 } label="RANDOM NUM TO ADD" value={ this.state.numPix } /> 
       )
 
     } else {
@@ -1459,8 +1538,12 @@ class App extends Component {
       grppButtonClasses += " white-border"
     }
 
+    if(this.state.darkMode === true){
+      darkButtonClasses += " white-border"
+    }
 
-    let transportButtons = [<div onClick={ () => { this.playSounds() } } className={playButtonClasses}>PLAY</div>, <div onClick={ () => { this.stopSounds() } } className={stopButtonClasses}>STOP</div>, <div onClick={ () => { this.incrementSchemeMode() } }  className={schmButtonClasses}>SCHM</div>, <div onClick={ () => { this.toggleOnline() } }  className={fnetButtonClasses}>FNET</div> ]
+//     <div onClick={ () => { this.incrementSchemeMode() } }  className={schmButtonClasses}>SCHM</div>,
+    let transportButtons = [<div onClick={ () => { this.playSounds() } } className={playButtonClasses}>PLAY</div>, <div onClick={ () => { this.stopSounds() } } className={stopButtonClasses}>STOP</div>, <div onClick={ () => { this.toggleOnline() } }  className={fnetButtonClasses}>FNET</div>, <div onClick={ prevState => this.setState({darkMode: !this.state.darkMode}) }  className={darkButtonClasses}>DARK</div>]
 
 
     if(this.state.online){
@@ -1469,8 +1552,8 @@ class App extends Component {
     } else {
       // only show rand button in offline
       transportButtons.push(<div onClick={ () => { this.toggleRandomizePixels() } }  className={randButtonClasses}>RAND</div>)
-
     }
+
     let transportButtonsContainer = (
       <span id="transport">
         { transportButtons }
@@ -1491,38 +1574,25 @@ class App extends Component {
             { semitoneShiftKnob }
           </span>
 
+
+{/*
+
+<SimpleControl changeFunctionName="changeTempo" fieldName="tempo" increment={ 1 } label="TEMPO" value={ this.state.tempo } /> 
+<SimpleControl changeFunctionName="changeNoteLength" fieldName="noteLength" increment={ 0.08 } label="NOTE LENGTH" value={ this.state.noteLength } /> 
+<SimpleControl changeFunctionName="changeSemitoneShift" fieldName="semitoneShift" increment={ 1 } label="PITCH" value={ this.state.semitoneShift } /> 
+*/}
+
           <span id="simple">
-            <label className={ simpleControlClasses }>
-              <button onTouchStart={ () => this.startHoldDown("changeMasterGain", "masterGain", 0.02) } onTouchEnd={ this.stopHoldDown } onMouseDown={ () => this.startHoldDown("changeMasterGain", "masterGain", 0.02) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeMasterGain(this.state.masterGain+0.02) } >▲</button>
-              <button onTouchStart={ () => this.startHoldDown("changeMasterGain", "masterGain", -0.02) } onTouchEnd={ this.stopHoldDown } onMouseDown={ () => this.startHoldDown("changeMasterGain", "masterGain", -0.02) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeMasterGain(this.state.masterGain-0.02) } >▼</button>
-              <div>VOLUME</div>
-              <div>{ this.state.masterGain }</div>
-            </label>
-
-            <label className={ simpleControlClasses }>
-              <button onTouchStart={ () => this.startHoldDown("changeTempo", "tempo", 1) } onTouchEnd={ this.stopHoldDown } onMouseDown={ () => this.startHoldDown("changeTempo", "tempo", 1) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeTempo(this.state.tempo+1) } >▲</button>
-              <button onTouchStart={ () => this.startHoldDown("changeTempo", "tempo", -1) } onTouchEnd={ this.stopHoldDown } onMouseDown={ () => this.startHoldDown("changeTempo", "tempo", -1) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeTempo(this.state.tempo-1) } >▼</button>
-              <div>TEMPO</div>
-              <div>{ this.state.tempo }</div>
-            </label>
-
+            <SimpleControl changeFunction={ this.changeMasterGain } startHoldDown={ this.startHoldDown } stopHoldDown={ this.stopHoldDown } classes={ simpleControlClasses } changeFunction={ this.changeMasterGain } fieldName="masterGain" increment={ 0.02 } label="VOLUME" value={ this.state.masterGain } /> 
+     
+            <SimpleControl changeFunction={ this.changeTempo } startHoldDown={ this.startHoldDown } stopHoldDown={ this.stopHoldDown } classes={ simpleControlClasses } fieldName="tempo" increment={ 1.03 } label="TEMPO" value={ this.state.tempo } /> 
+            
             { numPixControl }
             { randomizePixelsIntervalControl }
-
-            <label className={ simpleControlClasses }>
-              <button onTouchStart={ () => this.startHoldDown("changeNoteLength", "noteLength", 0.08) } onTouchEnd={ this.stopHoldDown } onMouseDown={ () => this.startHoldDown("changeNoteLength", "noteLength", 0.08) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeNoteLength(this.state.noteLength+0.08) } >▲</button>
-              <button onTouchStart={ () => this.startHoldDown("changeNoteLength", "noteLength", -0.08) } onTouchEnd={ this.stopHoldDown } onMouseDown={ () => this.startHoldDown("changeNoteLength", "noteLength", -0.08) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeNoteLength(this.state.noteLength-0.08) } >▼</button>
-              <div>NOTE LENGTH</div>
-              <div>{ this.state.noteLength }</div>
-            </label>
-
-            <label className={ simpleControlClasses }>
-              <button onTouchStart={ () => this.startHoldDown("changeSemitoneShift", "semitoneShift", 1) } onTouchEnd={ this.stopHoldDown } onMouseDown={ () => this.startHoldDown("changeSemitoneShift", "semitoneShift", 1) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeSemitoneShift(this.state.semitoneShift+1) } >▲</button>
-              <button onTouchStart={ () => this.startHoldDown("changeSemitoneShift", "semitoneShift", -1) } onTouchEnd={ this.stopHoldDown } onMouseDown={ () => this.startHoldDown("changeSemitoneShift", "semitoneShift", -1) } onMouseUp={ this.stopHoldDown } onClick={ () => this.changeSemitoneShift(this.state.semitoneShift-1) } >▼</button>
-              <div>PITCH</div>
-              <div>{ this.state.semitoneShift }</div>
-            </label>
-
+       
+            <SimpleControl changeFunction={ this.changeNoteLength } startHoldDown={ this.startHoldDown } stopHoldDown={ this.stopHoldDown } classes={ simpleControlClasses } fieldName="noteLength" increment={ 0.08 } label="NOTE LENGTH" value={ this.state.noteLength } /> 
+            
+            <SimpleControl changeFunction={ this.changeSemitoneShift } startHoldDown={ this.startHoldDown } stopHoldDown={ this.stopHoldDown } classes={ simpleControlClasses } fieldName="semitoneShift" increment={ 1 } label="PITCH" value={ this.state.semitoneShift } /> 
           </span>
         </div>
       )
@@ -1550,7 +1620,7 @@ class App extends Component {
     }
 
     return (
-      <div className="container">
+      <div className={ containerClasses }>
 
         <div className={ colorPaletteClasses } >
           { colorPalette }
