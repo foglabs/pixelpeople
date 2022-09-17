@@ -1485,6 +1485,10 @@ class App extends Component {
       liveClasses += " live"
       liveText = "LIVE"
     }
+    if(this.state.groupMode){
+      liveText += " (GROUP)"
+    }
+
     liveContainer = (
       <div className={ liveClasses }>
         { liveText }
@@ -1543,7 +1547,7 @@ class App extends Component {
     }
 
 //     <div onClick={ () => { this.incrementSchemeMode() } }  className={schmButtonClasses}>SCHM</div>,
-    let transportButtons = [<div onClick={ () => { this.playSounds() } } className={playButtonClasses}>PLAY</div>, <div onClick={ () => { this.stopSounds() } } className={stopButtonClasses}>STOP</div>, <div onClick={ () => { this.toggleOnline() } }  className={fnetButtonClasses}>FNET</div>, <div onClick={ prevState => this.setState({darkMode: !this.state.darkMode}) }  className={darkButtonClasses}>DARK</div>]
+    let transportButtons = [<div onClick={ () => { this.playSounds() } } className={playButtonClasses}>PLAY</div>, <div onClick={ () => { this.stopSounds() } } className={stopButtonClasses}>STOP</div>, <div onClick={ () => { this.toggleOnline() } }  className={fnetButtonClasses}>FNET</div>]
 
 
     if(this.state.online){
@@ -1553,6 +1557,8 @@ class App extends Component {
       // only show rand button in offline
       transportButtons.push(<div onClick={ () => { this.toggleRandomizePixels() } }  className={randButtonClasses}>RAND</div>)
     }
+
+    transportButtons.push(<div onClick={ prevState => this.setState({darkMode: !this.state.darkMode}) }  className={darkButtonClasses}>DARK</div>)
 
     let transportButtonsContainer = (
       <span id="transport">

@@ -76,7 +76,7 @@ div.knob-container {
   min-width:  11.5vw;
 }
 
-div.knob-container label {
+div.knob-container div {
   position: relative;
   margin-left: 3.6em;
   display: inline;
@@ -190,7 +190,8 @@ div.knob-container label {
 }
 
 .container.dark-mode .button.white-border {
-  box-shadow: 0 0 0 5px #222;
+  /*activated button*/
+  box-shadow: 0 0 12px 5px #2F5C29;
 }
 
 .button.green-border {
@@ -359,7 +360,7 @@ div.knob-container label {
     height: 12vh;
   }
 
-  label.simple-control {
+  div.simple-control {
     font-weight: bold;
     white-space: nowrap;
     text-align: center;
@@ -371,10 +372,24 @@ div.knob-container label {
     color:  #000;
   }
 
-  .container.dark-mode label.simple-control {
+  div.simple-control button {
+    /*margin-bottom: 2em;*/
+  }
+
+  div.simple-control button:active {
+    color: #f00;
+  }
+
+  .container.dark-mode div.simple-control {
     color: #aaa;
   }
-  label.simple-control.wide {
+
+  .container.dark-mode div.simple-control button:active {
+    color: #0f0;
+    background-color: #0f0;
+  }
+
+  div.simple-control.wide {
     width: 25vw;
   }
 
