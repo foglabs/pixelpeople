@@ -13,14 +13,18 @@
   line-height: 0;
 }
 
-.pixels-container.graph {
-  background-size: 8.3vw 8.3vw;
+.user-pixels-container {
+  width: 100vw;
+}
+
+.user-pixels-container.graph {
+  background-size: 8.333vw 8.333vw;
   background-image:
   linear-gradient(to right, #eee 4px, transparent 4px),
   linear-gradient(to bottom, #eee 4px, transparent 4px);
 }
 
-.container.dark-mode .pixels-container.graph {
+.container.dark-mode .user-pixels-container.graph {
  background-image:
   linear-gradient(to right, #080808 4px, transparent 4px),
   linear-gradient(to bottom, #080808 4px, transparent 4px); 
@@ -264,11 +268,19 @@ div.knob-container div {
   background-color: #022;
 }
 
+.more {
+  background-color: #f0f;
+  color: #b0b;
+}
+
+.container.dark-mode .more {
+  background-color: #220;
+}
+
 .dark {
   background-color: #000;
   color: #eee;
 }
-
 
 .sequencer-container {
   width: 100vw;
@@ -334,21 +346,26 @@ div.knob-container div {
     bottom: 0;
   }
 
-  .pixels-container, .colorpicker-container, .knob-container {
+  .colorpicker-container, .knob-container {
     height:  20vw;
   }
 
   .soundshower-container {
-    height: 10vw;
+    min-height: 4vh;
   }
 
   .user-controls-container {
-
     position: absolute;
+    width: 100vw;
     bottom: 28vh;
 
     height: 10vw;
     /*padding-bottom: 20em;*/
+  }
+
+  .user-pixels-container {
+    height: 50vh;
+    overflow: hidden;
   }
 
   div.knob-container {

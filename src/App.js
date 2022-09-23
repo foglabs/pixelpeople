@@ -280,6 +280,10 @@ class App extends Component {
     })
   }
 
+  toggleMoreMenu(){
+    this.setState( prevState => ({moreMenu: !prevState.moreMenu}) )
+  }
+
   toggleMasterSequencerSteps(){
     this.setState( prevState => ({masterSequencerSteps: prevState.masterSequencerSteps.map( (step) => { return !step }) }), () => {
     })
@@ -1498,11 +1502,14 @@ class App extends Component {
     let buttonClasses = "user-control button "
     let playButtonClasses = buttonClasses + "play"
     let stopButtonClasses = buttonClasses + "stop"
-    let randButtonClasses = buttonClasses + "rand"
-    let schmButtonClasses = buttonClasses + "schm"
     let fnetButtonClasses = buttonClasses + "fnet"
+    let moreButtonClasses = buttonClasses + "more"
+    
+    // alt buttons
     let grppButtonClasses = buttonClasses + "grpp"
     let darkButtonClasses = buttonClasses + "dark"
+    let randButtonClasses = buttonClasses + "rand"
+    let schmButtonClasses = buttonClasses + "schm"
 
     if(this.state.playing){
       playButtonClasses += " white-border"
@@ -1546,8 +1553,22 @@ class App extends Component {
       darkButtonClasses += " white-border"
     }
 
-//     <div onClick={ () => { this.incrementSchemeMode() } }  className={schmButtonClasses}>SCHM</div>,
-    let transportButtons = [<div onClick={ () => { this.playSounds() } } className={playButtonClasses}>PLAY</div>, <div onClick={ () => { this.stopSounds() } } className={stopButtonClasses}>STOP</div>, <div onClick={ () => { this.toggleOnline() } }  className={fnetButtonClasses}>FNET</div>]
+    if(this.state.moreMenu === true){
+      moreButtonClasses += " white-border"
+    }
+
+    let transportButtons
+
+    let moreText
+    if(this.state.moreMenu){
+      moreText = "LESS"
+      transportButtons = [<div onClick={ () => { this.incrementSchemeMode() } }  className={schmButtonClasses}>SCHM</div>,<div onClick={ prevState => this.setState({darkMode: !this.state.darkMode}) }  className={darkButtonClasses}>DARK</div>]
+
+    } else {
+      transportButtons = [<div onClick={ () => { this.playSounds() } } className={playButtonClasses}>PLAY</div>, <div onClick={ () => { this.stopSounds() } } className={stopButtonClasses}>STOP</div>, <div onClick={ () => { this.toggleOnline() } }  className={fnetButtonClasses}>FNET</div>]
+      moreText = "MORE"
+
+    }
 
 
     if(this.state.online){
@@ -1558,7 +1579,7 @@ class App extends Component {
       transportButtons.push(<div onClick={ () => { this.toggleRandomizePixels() } }  className={randButtonClasses}>RAND</div>)
     }
 
-    transportButtons.push(<div onClick={ prevState => this.setState({darkMode: !this.state.darkMode}) }  className={darkButtonClasses}>DARK</div>)
+    transportButtons.push( <div onClick={ () => { this.toggleMoreMenu() } }  className={moreButtonClasses}>{moreText}</div>)
 
     let transportButtonsContainer = (
       <span id="transport">
@@ -1614,7 +1635,7 @@ class App extends Component {
       )
 
       pixelsContainer = (
-        <div className="pixels-container graph">
+        <div className="user-pixels-container graph">
           { pixels }
         </div>
       )
