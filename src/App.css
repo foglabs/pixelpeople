@@ -313,12 +313,6 @@ div.knob-container div {
   font-size: 30px;
 }
 
-
-  #simple {
-    display: none;
-  }
-
-
 @media (orientation: portrait) {
   .pixels-container {
     min-height: 33.333vw;
