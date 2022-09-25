@@ -1323,15 +1323,16 @@ class App extends Component {
 
     }
 
-
-    if(this.state.online){
-      // show group mode toggle only when we're online
-      transportButtons.push(<div onClick={ () => { this.toggleGroupMode() } }  className={grppButtonClasses}>GRPP</div>)
-    } else {
-      // only show rand button in offline
-      transportButtons.push(<div onClick={ () => { this.toggleRandomizePixels() } }  className={randButtonClasses}>RAND</div>)
+    if(this.state.moreMenu){
+      if(this.state.online){
+        // show group mode toggle only when we're online
+        transportButtons.push(<div onClick={ () => { this.toggleGroupMode() } }  className={grppButtonClasses}>GRPP</div>)
+      } else {
+        // only show rand button in offline
+        transportButtons.push(<div onClick={ () => { this.toggleRandomizePixels() } }  className={randButtonClasses}>RAND</div>)
+      }
     }
-
+    
     transportButtons.push( <div onClick={ () => { this.toggleMoreMenu() } }  className={moreButtonClasses}>{moreText}</div>)
 
     let transportButtonsContainer = (
