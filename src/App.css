@@ -60,15 +60,52 @@
   display: none;
 }
 
-.user-controls-container {
-  width: 100%;
-  height:  8.33333vw;
+#transport {
+  display: inline-block;
+  min-width: 100vw;
+  width: 100vw;
 }
 
-.user-control {
-  overflow: hidden;
+.user-controls-container {
+  width: 80vw;
+  height:  10vw;
+}
+
+div.simple-control {
+  font-weight: bold;
+  white-space: nowrap;
   text-align: center;
-  /*height: 8.33333vw;*/
+  font-size: 1em;
+  overflow-x: hidden;
+  display: inline-block;
+  min-width: 20%;
+  width: 20%;
+  color:  #000;
+}
+
+
+.simple-control button {
+  margin-left: 2vw;
+  width:  3vw;
+  height:  3vw;
+  display: block;
+}
+
+div.simple-control button {
+  /*margin-bottom: 2em;*/
+}
+
+div.simple-control button:active {
+  color: #f00;
+}
+
+.container.dark-mode div.simple-control {
+  color: #aaa;
+}
+
+.container.dark-mode div.simple-control button:active {
+  color: #0f0;
+  background-color: #0f0;
 }
 
 div.knob-container {
@@ -180,37 +217,37 @@ div.knob-container div {
   /*width: 3.25%;*/
 }
 
-.button {
+.transport-control {
   box-shadow: 0 0 0 5px black;
   text-align: center;
   display: inline-block;
   font-size: 1.2em;
-  width: 4.9vw;
-  height: 8.3vw;
+  width: 25vw;
+  height: 4vw;
 }
 
-.button.white-border {
+.transport-control.white-border {
   box-shadow: 0 0 0 5px #fff;
 }
 
-.container.dark-mode .button.white-border {
+.container.dark-mode .transport-control.white-border {
   /*activated button*/
   box-shadow: 0 0 12px 5px #2F5C29;
 }
 
-.button.green-border {
+.transport-control.green-border {
   box-shadow: 0 0 0 5px #0f0;
 }
 
-.container.dark-mode .button.green-border {
+.container.dark-mode .transport-control.green-border {
   box-shadow: 0 0 0 5px #020;
 }
 
-.button:active {
+.transport-control:active {
   box-shadow: 0 0 0 5px #fff;
 }
 
-.container.dark-mode .button:active {
+.container.dark-mode .transport-control:active {
   box-shadow: 0 0 0 5px #222;
 }
 
@@ -366,38 +403,16 @@ div.knob-container div {
     display: none;
   }
 
-  .button {
+  .transport-control {
     width: 25vw;
     height: 12vh;
   }
 
   div.simple-control {
-    font-weight: bold;
-    white-space: nowrap;
-    text-align: center;
     font-size: 0.7em;
-    overflow-x: hidden;
-    display: inline-block;
     min-width: 16vw;
     width: 16vw;
     color:  #000;
-  }
-
-  div.simple-control button {
-    /*margin-bottom: 2em;*/
-  }
-
-  div.simple-control button:active {
-    color: #f00;
-  }
-
-  .container.dark-mode div.simple-control {
-    color: #aaa;
-  }
-
-  .container.dark-mode div.simple-control button:active {
-    color: #0f0;
-    background-color: #0f0;
   }
 
   div.simple-control.wide {
@@ -405,10 +420,8 @@ div.knob-container div {
   }
 
   .simple-control button {
-    margin-left: 2vw;
     width:  12vw;
     height:  12vw;
-    display: block;
   }
 
   .container.dark-mode .simple-control button {

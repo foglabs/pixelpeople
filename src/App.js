@@ -1252,7 +1252,7 @@ class App extends Component {
       </div>
     )
 
-    let buttonClasses = "user-control button "
+    let buttonClasses = "transport-control "
     let playButtonClasses = buttonClasses + "play"
     let stopButtonClasses = buttonClasses + "stop"
     let fnetButtonClasses = buttonClasses + "fnet"
