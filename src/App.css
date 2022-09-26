@@ -18,7 +18,7 @@
 }
 
 .user-pixels-container.graph {
-  background-size: 8.333vw 8.333vw;
+  background-size: 4vw 4vw;
   background-image:
   linear-gradient(to right, #eee 4px, transparent 4px),
   linear-gradient(to bottom, #eee 4px, transparent 4px);
@@ -35,6 +35,12 @@
   width: 16.666vw;
   min-height: 8.3vw;
   height: 8.3vw;
+}
+
+.user-pixels-container .pixel {
+  min-height:  4vw;
+  height:  4vw;
+  width: 4vw;
 }
 
 .pixels-container.big .pixel {
@@ -85,7 +91,7 @@ div.simple-control {
 
 
 .simple-control button {
-  margin-left: 2vw;
+  margin-left: 6.5vw;
   width:  3vw;
   height:  3vw;
   display: block;
@@ -279,12 +285,12 @@ div.knob-container div {
 }
 
 .schm {
-  background-color: #f0f;
-  color: #b0b;
+  background-color: #fff;
+  color: #000;
 }
 
 .container.dark-mode .schm {
-  background-color: #202;
+  background-color: #111;
 }
 
 .fnet {
@@ -311,7 +317,8 @@ div.knob-container div {
 }
 
 .container.dark-mode .more {
-  background-color: #220;
+  background-color: #202;
+  color: #b0b;
 }
 
 .dark {
@@ -410,8 +417,8 @@ div.knob-container div {
 
   div.simple-control {
     font-size: 0.7em;
-    min-width: 16vw;
-    width: 16vw;
+    min-width: 13.92vw;
+    width: 13.92vw;
     color:  #000;
   }
 
@@ -420,7 +427,8 @@ div.knob-container div {
   }
 
   .simple-control button {
-    width:  12vw;
+    margin-left: 2.4vw;
+    width: 12vw;
     height:  12vw;
   }
 
@@ -431,7 +439,7 @@ div.knob-container div {
   }
 
   .simple-control.wide button {
-    width:  22vw;
+    width:  20vw;
   }
 
   .sequencer-button {
