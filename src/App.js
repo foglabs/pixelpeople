@@ -85,6 +85,10 @@ class App extends Component {
     this.changeTempo = this.changeTempo.bind(this)
     this.changeNoteLength = this.changeNoteLength.bind(this)
     this.changeSemitoneShift = this.changeSemitoneShift.bind(this)
+
+    this.changeRandomizePixelsInterval = this.changeRandomizePixelsInterval.bind(this)
+    this.changeNumPix = this.changeNumPix.bind(this)
+
     this.changeColor = this.changeColor.bind(this)
 
     this.startHoldDown = this.startHoldDown.bind(this)
@@ -1276,11 +1280,11 @@ class App extends Component {
       randButtonClasses += " white-border"
 
       randomizePixelsIntervalControl = (
-        <SimpleControl changeFunction={ this.changeRandomizePixelsInterval } startHoldDown={ this.startHoldDown } stopHoldDown={ this.stopHoldDown } classes={ simpleControlClasses } fieldName="randomizePixelsInterval" increment={ 100 } label="RANDOM INTERVAL" value={ this.state.randomizePixelsInterval } /> 
+        <SimpleControl changeFunction={ this.changeRandomizePixelsInterval } round={ true } startHoldDown={ this.startHoldDown } stopHoldDown={ this.stopHoldDown } classes={ simpleControlClasses } fieldName="randomizePixelsInterval" increment={ 100 } label="RANDOM INTERVAL" value={ this.state.randomizePixelsInterval } /> 
       )
 
       numPixControl = (
-        <SimpleControl changeFunction={ this.changeNumPix } startHoldDown={ this.startHoldDown } stopHoldDown={ this.stopHoldDown } classes={ simpleControlClasses } fieldName="numPix" increment={ 1 } label="RANDOM NUM TO ADD" value={ this.state.numPix } /> 
+        <SimpleControl changeFunction={ this.changeNumPix } round={ true } startHoldDown={ this.startHoldDown } stopHoldDown={ this.stopHoldDown } classes={ simpleControlClasses } fieldName="numPix" increment={ 1 } label="RANDOM NUM TO ADD" value={ this.state.numPix } /> 
       )
 
     } else {
@@ -1401,11 +1405,11 @@ class App extends Component {
         
         { transportButtonsContainer }
 
-        { masterSequencer }
-
         { liveContainer }
 
         { soundShowsContainer }
+
+        { masterSequencer }
 
         { pixelsContainer }
       </div>

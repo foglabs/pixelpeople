@@ -20,12 +20,18 @@ class Synth {
     this.oscillator.connect(this.gainNode)
     // connect new osc to global vol
     this.gainNode.connect(globalGain)
+
     this.oscillator.start()
 
     this.frequency = frequency
     this.stop()
 
     this.id = new Date().getTime() + Math.random().toString(16).slice(2)
+
+    // eh?
+    // this.gainNode.value = 0.0000001
+    // fade in 2s later
+    this.gainNode.gain.setValueAtTime(0, this.audioContext.currentTime)
   }
 
   rampToFrequency(frequency, slideTime){
@@ -43,9 +49,10 @@ class Synth {
   }
 
   play(){
-    if(this.gainNode.value === 0){
-      this.setGain(this.initialGain)
-    }
+    // if(this.gainNode.gain.value === 0){
+    //   console.log( 'its happen' )
+    //   this.gainNode.gain.linearRampToValueAtTime(this.initialGain, this.audioContext.currentTime, this.audioContext.currentTime+1)
+    // }
 
     this.enable = true
 

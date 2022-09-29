@@ -187,10 +187,14 @@ synthsPlaying doesnt update colors when using socket pixels
 
 *need to check boundaries on mastergain + others
 
-only show big pix when nonmaster groupmode
-figure out good highlight for user selecgted color
+*only show big pix when nonmaster groupmode
+*figure out good highlight for user selecgted color
 
 
 
-dump rcknobx
+*dump rcknobx
 
+
+
+add automatic fade-in for new craeted synths
+  0-mastergain over 1s or so
