@@ -99,6 +99,7 @@ class App extends Component {
     this.incrementSchemeMode = this.incrementSchemeMode.bind(this)
     this.toggleDarkMode = this.toggleDarkMode.bind(this)
     this.toggleGroupMode = this.toggleGroupMode.bind(this)
+    this.toggleRandomizePixels = this.toggleRandomizePixels.bind(this)
     this.toggleCoarse = this.toggleCoarse.bind(this)
     this.incrementSchemeMode = this.incrementSchemeMode.bind(this)
 
@@ -1172,11 +1173,6 @@ class App extends Component {
     }
   }
  
-  // findPatternSoundRepeats(pixels){
-
-  //   return createThese
-  // }
-
   createPatternSound(parentSynthId, color, numberOfRepeats, index, gain){
 
     console.log( 'fuc, bitch! im makin pattern sound with psi ', index )
@@ -1283,34 +1279,9 @@ class App extends Component {
       </div>
     )
 
-    let buttonClasses = "transport-control "
-    if(this.state.moreMenu){
-      buttonClasses += "thin "
-    }
-
-    let playButtonClasses = buttonClasses + "play"
-    let stopButtonClasses = buttonClasses + "stop"
-    let fnetButtonClasses = buttonClasses + "fnet"
-    let moreButtonClasses = buttonClasses + "more"
-    
-    // alt buttons
-    let grppButtonClasses = buttonClasses + "grpp"
-    let darkButtonClasses = buttonClasses + "dark"
-    let randButtonClasses = buttonClasses + "rand"
-    let schmButtonClasses = buttonClasses + "schm"
-    let crseButtonClasses = buttonClasses + "crse"
-    let fineButtonClasses = buttonClasses + "fine"
-
-    if(this.state.playing){
-      playButtonClasses += " white-border"
-    } else {
-      stopButtonClasses += " white-border"
-    }
-
     let simpleControlClasses = "simple-control"
     let randomizePixelsIntervalControl, numPixControl
     if(this.state.randomizePixels){
-      randButtonClasses += " white-border"
 
       randomizePixelsIntervalControl = (
         <SimpleControl changeFunction={ this.changeRandomizePixelsInterval } round={ true } startHoldDown={ this.startHoldDown } stopHoldDown={ this.stopHoldDown } classes={ simpleControlClasses } fieldName="randomizePixelsInterval" increment={ 100 } label="RANDOM INTERVAL" value={ this.state.randomizePixelsInterval } /> 
@@ -1323,28 +1294,6 @@ class App extends Component {
     } else {
       // if not randiom, add wide class to simple control classes
       simpleControlClasses += " wide"
-    }
-
-    if(this.state.schemeMode === SCHEMEMODE0){
-      schmButtonClasses += " white-border"
-    } else {
-      schmButtonClasses += " green-border"
-    }
-
-    if(this.state.online === true){
-      fnetButtonClasses += " white-border"
-    }
-
-    if(this.state.groupMode === true){
-      grppButtonClasses += " white-border"
-    }
-
-    if(this.state.darkMode === true){
-      darkButtonClasses += " white-border"
-    }
-
-    if(this.state.moreMenu === true){
-      moreButtonClasses += " white-border"
     }
 
     let transportButtons
@@ -1361,7 +1310,6 @@ class App extends Component {
       } else {
         // only show rand button in offline
         transportButtons.push(<TransportControl thin={ this.state.moreMenu } onClick={ this.toggleRandomizePixels } active={ this.state.randomizePixels } code="rand" />)
-
       }
 
       let coarseCode
@@ -1389,13 +1337,6 @@ class App extends Component {
     if( !this.state.online || !this.state.groupMode || this.isMaster() ){
       userControls = (
         <div className="user-controls-container">
-
-{/*
-
-<SimpleControl changeFunctionName="changeTempo" fieldName="tempo" increment={ 1 } label="TEMPO" value={ this.state.tempo } /> 
-<SimpleControl changeFunctionName="changeNoteLength" fieldName="noteLength" increment={ 0.08 } label="NOTE LENGTH" value={ this.state.noteLength } /> 
-<SimpleControl changeFunctionName="changeSemitoneShift" fieldName="semitoneShift" increment={ 1 } label="PITCH" value={ this.state.semitoneShift } /> 
-*/}
 
           <span id="simple">
             <SimpleControl changeFunction={ this.changeMasterGain } startHoldDown={ this.startHoldDown } stopHoldDown={ this.stopHoldDown } classes={ simpleControlClasses } changeFunction={ this.changeMasterGain } fieldName="masterGain" increment={ this.state.coarse ? 0.08 : 0.02 } label="VOLUME" value={ this.state.masterGain } /> 
