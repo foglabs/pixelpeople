@@ -2,6 +2,10 @@
   background-color: #fff;
   width: 100vw;
   height: 100vh;
+
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none; /* IE 10 and IE 11 */
+  user-select: none; /* Standard syntax */
 }
 
 .container.dark-mode {
@@ -18,7 +22,7 @@
 }
 
 .user-pixels-container.graph {
-  background-size: 4vw 4vw;
+  background-size: 8vw 8vw;
   background-image:
   linear-gradient(to right, #eee 4px, transparent 4px),
   linear-gradient(to bottom, #eee 4px, transparent 4px);
@@ -38,9 +42,9 @@
 }
 
 .user-pixels-container .pixel {
-  min-height:  4vw;
-  height:  4vw;
-  width: 4vw;
+  min-height:  8vw;
+  height:  8vw;
+  width: 8vw;
 }
 
 .pixels-container.big .pixel {
@@ -100,6 +104,9 @@ div.simple-control {
 
 div.simple-control button {
   /*margin-bottom: 2em;*/
+}
+.container.dark-mode div.simple-control button {
+  border: 1px solid #111;
 }
 
 div.simple-control button:active {
@@ -321,14 +328,34 @@ div.knob-container div {
   background-color: #022;
 }
 
-.more {
+.more, .less {
   background-color: #f0f;
   color: #b0b;
 }
 
-.container.dark-mode .more {
+.container.dark-mode .more, .container.dark-mode .less {
   background-color: #202;
   color: #b0b;
+}
+
+.crse {
+  background-color: #ddf;
+  color: #99b;
+}
+
+.container.dark-mode .crse {
+  background-color: #112;
+  color: #99b;
+}
+
+.fine {
+  background-color: #fdd;
+  color: #b99;
+}
+
+.container.dark-mode .fine {
+  background-color: #211;
+  color: #b99;
 }
 
 .dark {
@@ -422,6 +449,11 @@ div.knob-container div {
 
   .transport-control {
     width: 25vw;
+    height: 12vh;
+  }
+
+  .thin.transport-control {
+    width: 20vw;
     height: 12vh;
   }
 

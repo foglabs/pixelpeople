@@ -12,6 +12,7 @@ import Synth from "./classes/Synth.js"
 import MasterSequencer from "./classes/MasterSequencer.js"
 import ColorScheme from "./classes/ColorScheme.js"
 import SimpleControl from "./classes/SimpleControl.js"
+import TransportControl from "./classes/TransportControl.js"
 
 import WorkerBuilder from "./wb.js"
 import SequencerWorker from "./seqWorker.js"
@@ -75,7 +76,8 @@ class App extends Component {
       holdTimer: false,
       holdFactor: 0.5,
 
-      darkMode: true
+      darkMode: true,
+      coarse: true
     }
 
     this.toggleMasterSequencerStep = this.toggleMasterSequencerStep.bind(this)
@@ -90,6 +92,17 @@ class App extends Component {
     this.changeNumPix = this.changeNumPix.bind(this)
 
     this.changeColor = this.changeColor.bind(this)
+
+    this.playSounds = this.playSounds.bind(this)
+    this.stopSounds = this.stopSounds.bind(this)
+    this.toggleOnline = this.toggleOnline.bind(this)
+    this.incrementSchemeMode = this.incrementSchemeMode.bind(this)
+    this.toggleDarkMode = this.toggleDarkMode.bind(this)
+    this.toggleGroupMode = this.toggleGroupMode.bind(this)
+    this.toggleCoarse = this.toggleCoarse.bind(this)
+    this.incrementSchemeMode = this.incrementSchemeMode.bind(this)
+
+    this.toggleMoreMenu = this.toggleMoreMenu.bind(this)
 
     this.startHoldDown = this.startHoldDown.bind(this)
     this.stopHoldDown = this.stopHoldDown.bind(this)
@@ -178,14 +191,20 @@ class App extends Component {
         // data[fieldName] = this.state[fieldName] + increment
         // this.setState({data})
 
+        let change
         // run the changer function every 1s
-        let change = increment*this.state.holdFactor
-        if(round){
-          change = Math.floor(change)
+        if(this.state.coarse){
+          change = increment
+        } else {
+          change = increment*this.state.holdFactor
+          if(round){
+            change = Math.floor(change)
+          }
         }
+        
         daFunc(this.state[fieldName] + change)
         this.setState({holdFactor: this.state.holdFactor*1.3})
-      }, 240 )
+      }, 280 )
 
       this.setState({holdDown: fieldName, holdTimer: holdTimer})  
     }
@@ -283,6 +302,14 @@ class App extends Component {
 
   toggleMoreMenu(){
     this.setState( prevState => ({moreMenu: !prevState.moreMenu}) )
+  }
+
+  toggleDarkMode(){
+    this.setState( prevState => ({darkMode: !prevState.darkMode}) )
+  }
+
+  toggleCoarse(){
+    this.setState( prevState => ({coarse: !prevState.coarse}) )
   }
 
   toggleMasterSequencerSteps(){
@@ -1257,6 +1284,10 @@ class App extends Component {
     )
 
     let buttonClasses = "transport-control "
+    if(this.state.moreMenu){
+      buttonClasses += "thin "
+    }
+
     let playButtonClasses = buttonClasses + "play"
     let stopButtonClasses = buttonClasses + "stop"
     let fnetButtonClasses = buttonClasses + "fnet"
@@ -1267,6 +1298,8 @@ class App extends Component {
     let darkButtonClasses = buttonClasses + "dark"
     let randButtonClasses = buttonClasses + "rand"
     let schmButtonClasses = buttonClasses + "schm"
+    let crseButtonClasses = buttonClasses + "crse"
+    let fineButtonClasses = buttonClasses + "fine"
 
     if(this.state.playing){
       playButtonClasses += " white-border"
@@ -1316,28 +1349,35 @@ class App extends Component {
 
     let transportButtons
 
-    let moreText
+    let moreCode
     if(this.state.moreMenu){
-      moreText = "LESS"
-      transportButtons = [<div onClick={ () => { this.incrementSchemeMode() } }  className={schmButtonClasses}>SCHM</div>,<div onClick={ prevState => this.setState({darkMode: !this.state.darkMode}) }  className={darkButtonClasses}>DARK</div>]
 
-    } else {
-      transportButtons = [<div onClick={ () => { this.playSounds() } } className={playButtonClasses}>PLAY</div>, <div onClick={ () => { this.stopSounds() } } className={stopButtonClasses}>STOP</div>, <div onClick={ () => { this.toggleOnline() } }  className={fnetButtonClasses}>FNET</div>]
-      moreText = "MORE"
+      transportButtons = [<TransportControl thin={ this.state.moreMenu } onClick={ this.incrementSchemeMode } code={ "schm" } active={ true } borderColor={ this.state.schemeMode === SCHEMEMODE0 ? "white" : "green" } />,<TransportControl thin={ this.state.moreMenu } onClick={ prevState => this.setState({darkMode: !this.state.darkMode}) } code={ "dark" } active={ this.state.darkMode } />]
+      moreCode = "less"
 
-    }
-
-    if(this.state.moreMenu){
       if(this.state.online){
         // show group mode toggle only when we're online
-        transportButtons.push(<div onClick={ () => { this.toggleGroupMode() } }  className={grppButtonClasses}>GRPP</div>)
+        transportButtons.push(<TransportControl thin={ this.state.moreMenu } onClick={ this.toggleGroupMode } active={ this.state.groupMode } code="grpp" />)
       } else {
         // only show rand button in offline
-        transportButtons.push(<div onClick={ () => { this.toggleRandomizePixels() } }  className={randButtonClasses}>RAND</div>)
+        transportButtons.push(<TransportControl thin={ this.state.moreMenu } onClick={ this.toggleRandomizePixels } active={ this.state.randomizePixels } code="rand" />)
+
       }
+
+      let coarseCode
+      if(this.state.coarse){
+        coarseCode = "crse"
+      } else {
+        coarseCode = "fine"
+      }
+      transportButtons.push(<TransportControl thin={ this.state.moreMenu } onClick={ this.toggleCoarse } active={ this.state.coarse } code={ coarseCode } />)
+    } else {
+
+      transportButtons = [<TransportControl thin={ this.state.moreMenu } onClick={ this.playSounds } active={ this.state.playing } code={ "play" } />,<TransportControl thin={ this.state.moreMenu } onClick={ this.stopSounds } active={ !this.state.playing } code={ "stop" } />,<TransportControl thin={ this.state.moreMenu } onClick={ this.toggleOnline }  active={ this.state.online } code={ "fnet" } />]
+      moreCode = "more"
     }
     
-    transportButtons.push( <div onClick={ () => { this.toggleMoreMenu() } }  className={moreButtonClasses}>{moreText}</div>)
+    transportButtons.push(<TransportControl thin={ this.state.moreMenu } onClick={ this.toggleMoreMenu } active={ this.state.moreMenu } code={ moreCode } />)
 
     let transportButtonsContainer = (
       <span id="transport">
@@ -1358,16 +1398,16 @@ class App extends Component {
 */}
 
           <span id="simple">
-            <SimpleControl changeFunction={ this.changeMasterGain } startHoldDown={ this.startHoldDown } stopHoldDown={ this.stopHoldDown } classes={ simpleControlClasses } changeFunction={ this.changeMasterGain } fieldName="masterGain" increment={ 0.02 } label="VOLUME" value={ this.state.masterGain } /> 
+            <SimpleControl changeFunction={ this.changeMasterGain } startHoldDown={ this.startHoldDown } stopHoldDown={ this.stopHoldDown } classes={ simpleControlClasses } changeFunction={ this.changeMasterGain } fieldName="masterGain" increment={ this.state.coarse ? 0.08 : 0.02 } label="VOLUME" value={ this.state.masterGain } /> 
      
-            <SimpleControl changeFunction={ this.changeTempo } startHoldDown={ this.startHoldDown } stopHoldDown={ this.stopHoldDown } classes={ simpleControlClasses } fieldName="tempo" increment={ 1.03 } label="TEMPO" value={ this.state.tempo } /> 
+            <SimpleControl changeFunction={ this.changeTempo } startHoldDown={ this.startHoldDown } stopHoldDown={ this.stopHoldDown } classes={ simpleControlClasses } fieldName="tempo" increment={ this.state.coarse ? 1 : 0.08 } label="TEMPO" value={ this.state.tempo } /> 
             
             { numPixControl }
             { randomizePixelsIntervalControl }
        
-            <SimpleControl changeFunction={ this.changeNoteLength } startHoldDown={ this.startHoldDown } stopHoldDown={ this.stopHoldDown } classes={ simpleControlClasses } fieldName="noteLength" increment={ 0.08 } label="NOTE LENGTH" value={ this.state.noteLength } /> 
+            <SimpleControl changeFunction={ this.changeNoteLength } startHoldDown={ this.startHoldDown } stopHoldDown={ this.stopHoldDown } classes={ simpleControlClasses } fieldName="noteLength" increment={ this.state.coarse ? 0.2 : 0.08 } label="NOTE LENGTH" value={ this.state.noteLength } /> 
             
-            <SimpleControl changeFunction={ this.changeSemitoneShift } startHoldDown={ this.startHoldDown } stopHoldDown={ this.stopHoldDown } classes={ simpleControlClasses } fieldName="semitoneShift" increment={ 1 } label="PITCH" value={ this.state.semitoneShift } /> 
+            <SimpleControl changeFunction={ this.changeSemitoneShift } startHoldDown={ this.startHoldDown } stopHoldDown={ this.stopHoldDown } classes={ simpleControlClasses } fieldName="semitoneShift" increment={ this.state.coarse ? 1 : 0.01 } label="PITCH" value={ this.state.semitoneShift } /> 
           </span>
         </div>
       )
@@ -1395,7 +1435,7 @@ class App extends Component {
     }
 
     return (
-      <div className={ containerClasses }>
+      <div className={ containerClasses } onTouchEnd={ this.stopHoldDown } onMouseUp={ this.stopHoldDown } >
 
         <div className={ colorPaletteClasses } >
           { colorPalette }
