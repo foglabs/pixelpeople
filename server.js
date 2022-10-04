@@ -11,7 +11,7 @@ const path = require('path');
 
 app.get('/', function(req, res, next){
   res.header('Content-Type', 'text/html')
-  res.sendFile(path.join(__dirname, 'public', 'index.html'))
+  res.sendFile(path.join(__dirname, 'build', 'index.html'))
 })
 
 app.listen(3000);
