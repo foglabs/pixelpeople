@@ -22,7 +22,7 @@ var seqWorker = new WorkerBuilder(SequencerWorker)
 
 // online
 // const SOCKET_BACKEND = "wss://" + window.location.hostname + "/online"
-const SOCKET_BACKEND = "ws://" + window.location.hostname + "/s"
+const SOCKET_BACKEND = "ws://" + window.location.hostname + ":8000"
 var client = new W3CWebSocket(SOCKET_BACKEND)
 
 function killOnline(userID){
@@ -55,7 +55,7 @@ class App extends Component {
       // kind of stupid but easier to track v
       synthsPlaying: [],
       playing: false,
-      masterGain: 0.12,
+      masterGain: 0.36,
       masterSequencerSteps: new Array(this.sequencerTrackLength).fill(true),
       randomizePixels: false,
       randomizePixelsInterval: 3600,
@@ -76,7 +76,7 @@ class App extends Component {
       holdTimer: false,
       holdFactor: 0.5,
 
-      darkMode: true,
+      darkMode: false,
       coarse: true
     }
 
@@ -610,7 +610,9 @@ class App extends Component {
   }
 
   randomColor(){
-    return this.rainbow().sort(() => Math.random() - 0.5)[0]
+    let color = this.rainbow().sort(() => Math.random() - 0.5)[ Math.floor( Math.random() * this.rainbow().length )]
+    console.log( 'color', color )
+    return color
   }
 
   randomWaveform(){
@@ -685,7 +687,7 @@ class App extends Component {
 
   pixelsFromColors(colorDatas){
     console.log( 'coldsa ', colorDatas )
-    return colorDatas.map(colorData => this.newPixel(colorData.color, colorData.userID))
+    return colorDatas.map( (colorData) => this.newPixel(colorData.color, colorData.userID))
   }
 
   getPixels(){
@@ -1386,7 +1388,6 @@ class App extends Component {
         
         { transportButtonsContainer }
 
-        { liveContainer }
 
         { soundShowsContainer }
 

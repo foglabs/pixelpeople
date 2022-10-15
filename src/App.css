@@ -432,7 +432,7 @@ div.knob-container div {
   .user-controls-container {
     position: absolute;
     width: 100vw;
-    bottom: 28vh;
+    bottom: 26vh;
 
     height: 10vw;
     /*padding-bottom: 20em;*/
@@ -449,12 +449,11 @@ div.knob-container div {
 
   .transport-control {
     width: 25vw;
-    height: 12vh;
+    height: 8vh;
   }
 
   .thin.transport-control {
     width: 20vw;
-    height: 12vh;
   }
 
   div.simple-control {
