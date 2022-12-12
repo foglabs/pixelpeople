@@ -147,6 +147,9 @@ class App extends Component {
             if(!this.state.groupMode || this.isMaster() ){
               this.state.synths[action.data.playSynth.index].play()
             }
+          } else if(action.data.lightStep){
+            console.log( 'this one', action.data.lightStep )
+            this.setState({lightStep: action.data.lightStep})
           } else if(action.data.randomizePixels){
             if(this.state.playing){
               // get rid of old pixels
@@ -1356,7 +1359,7 @@ class App extends Component {
       )
 
       masterSequencer = (
-        <MasterSequencer toggleMasterSequencerStep={ this.toggleMasterSequencerStep } steps={ this.state.masterSequencerSteps } />
+        <MasterSequencer lightStep={ this.state.lightStep } toggleMasterSequencerStep={ this.toggleMasterSequencerStep } steps={ this.state.masterSequencerSteps } />
       )
 
       soundShowsContainer = (

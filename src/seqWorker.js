@@ -155,12 +155,15 @@ export default () => {
 
         for(var i=0; i<this.tracks.length; i++){
           if(this.tracks[i][this.globalStep]){
-            // postMessage("PLAY NOTE Track " + i + "Note " + this.globalStep)
-            // track and this.state.synths[index] are the same
-            // console.log( 'PLAY IT' )
+
+            // play note if enabled
+            // track and this.state.synths[index] are the same lol
             postMessage({playSynth: {index: i}})
           }
         }
+
+        // tell sequencer UI to light up corresponding step
+        postMessage({lightStep: this.globalStep })
 
         this.globalStep++
         if(this.globalStep == this.trackLength){
