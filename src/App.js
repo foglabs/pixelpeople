@@ -48,7 +48,7 @@ class App extends Component {
     this.sequencerTrackLength = 16
 
     this.state = {
-      tempo: 60,
+      tempo: 64,
       numPix: 0,
       pixels: [],
       synths: [],
@@ -59,8 +59,8 @@ class App extends Component {
       masterSequencerSteps: new Array(this.sequencerTrackLength).fill(true),
       randomizePixels: false,
       randomizePixelsInterval: 3600,
-      noteLength: 0.3,
-      semitoneShift: 0,
+      noteLength: 3.9,
+      semitoneShift: -22,
       schemeMode: SCHEMEMODE0,
       
       online: true,
@@ -76,7 +76,7 @@ class App extends Component {
       holdTimer: false,
       holdFactor: 0.5,
 
-      darkMode: false,
+      darkMode: true,
       coarse: true
     }
 

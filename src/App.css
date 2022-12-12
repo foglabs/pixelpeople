@@ -24,14 +24,14 @@
 .user-pixels-container.graph {
   background-size: 8vw 8vw;
   background-image:
-  linear-gradient(to right, #eee 4px, transparent 4px),
-  linear-gradient(to bottom, #eee 4px, transparent 4px);
+  linear-gradient(to right, #fcfcfc 4px, transparent 4px),
+  linear-gradient(to bottom, #fcfcfc 4px, transparent 4px);
 }
 
 .container.dark-mode .user-pixels-container.graph {
  background-image:
-  linear-gradient(to right, #080808 4px, transparent 4px),
-  linear-gradient(to bottom, #080808 4px, transparent 4px); 
+  linear-gradient(to right, #030303 4px, transparent 4px),
+  linear-gradient(to bottom, #030303 4px, transparent 4px); 
 }
 
 .pixel {
@@ -41,6 +41,19 @@
   height: 8.3vw;
 }
 
+.pixels-container .pixel {
+/*  border: 12px solid white;*/
+/*box-shadow: 0 0 0 8px #fff;*/
+  outline:  12px solid #fff;
+  outline-offset: -12px;
+}
+
+.container.dark-mode .pixels-container .pixel {
+/*  border: 12px solid white;*/
+/*box-shadow: 0 0 0 8px #fff;*/
+  outline:  12px solid #000;
+  outline-offset: -12px;
+}
 .user-pixels-container .pixel {
   min-height:  8vw;
   height:  8vw;
@@ -53,13 +66,16 @@
 }
 
 .pixel.border {
-  outline:  5px solid #fff;
-  outline-offset: -5px;
+/*  outline:  12px solid #fff;*/
+  outline-offset: -12px;
   z-index: 1000;
+  outline:  5px solid #000;
 }
 
 .container.dark-mode .pixel.border {
-  outline:  5px solid #000;
+  outline-offset: -12px;
+  z-index: 1000;
+  outline:  5px solid #fff;
 }
 
 .colorpicker-container {
@@ -255,7 +271,7 @@ div.knob-container div {
 
 .container.dark-mode .transport-control.white-border {
   /*activated button*/
-  box-shadow: 0 0 12px 5px #333;
+  box-shadow: 0 0 0px 5px #333;
 }
 
 .transport-control.green-border {
@@ -377,14 +393,21 @@ div.knob-container div {
 .container.dark-mode .sequencer-button {
   border: 1px solid #333;
   background-color: #000;
+  border-radius: 12px;
 }
 
 .enable {
   color: #0f0;
+  outline-offset: -12px;
+  z-index: 1000;
+  outline:  12px solid #ff0;
 }
 
 .disable {
   color: #f00;
+  outline-offset: -12px;
+  z-index: 1000;
+  outline:  12px solid #111;
 }
 
 

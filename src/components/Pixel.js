@@ -3,10 +3,12 @@ function Pixel(props){
 
   let boxShadow = ""
   let pixelClasses = "pixel"
-  let style = { backgroundColor: props.color }
+  // let style = { backgroundColor: props.color }
   if(props.border){
     pixelClasses += " border"
-    boxShadow = "0px 0px 4px " + props.color
+    
+  } else {
+    boxShadow = "0px 0px 4px " + props.color;
   }
   return(
     <div onClick={ props.onClick } className={ pixelClasses } style={ { backgroundColor: props.color, boxShadow: boxShadow } } />
