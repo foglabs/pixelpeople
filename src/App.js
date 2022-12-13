@@ -148,7 +148,6 @@ class App extends Component {
               this.state.synths[action.data.playSynth.index].play()
             }
           } else if(action.data.lightStep){
-            console.log( 'this one', action.data.lightStep )
             this.setState({lightStep: action.data.lightStep})
           } else if(action.data.randomizePixels){
             if(this.state.playing){
@@ -620,7 +619,7 @@ class App extends Component {
 
   randomWaveform(){
     return "sine"
-    return ["sine","square","sawtooth","triangle"].sort(() => Math.random() - 0.5)[0]
+    // return ["sine","square","sawtooth","triangle"].sort(() => Math.random() - 0.5)[0]
   }
 
   updateSequencerTracks(){
@@ -1003,6 +1002,9 @@ class App extends Component {
     // need to track which nonschemem pix because trackindex is no longer an indication of nonschemepix order (because schemepix can be anywhere in synths)
     let currentNonSchemePix = 0
 
+    // seq ui colors
+    let msColors = new Array(this.sequencerTrackLength).fill("#000")
+
     for(var i=0; i<this.state.synths.length; i++){
       // determine steps for each synth
       let steps = []
@@ -1032,7 +1034,6 @@ class App extends Component {
             // only change this track if scheme matched and this colors in it
 
             for(var y=0; y<this.sequencerTrackLength; y++){
-
               // use which scheme color we're on to spread across seq
               let enable
               // if( ((y-matchedColorIndex*2) % matchedSchemes[x].skipLength()) == 0){
@@ -1058,6 +1059,7 @@ class App extends Component {
         let lastPlayedIndex = 0
 
         for(var y=0; y<this.sequencerTrackLength; y++){
+
           // use which scheme color we're on to spread across seq
           let enable
           // if( ((y-matchedColorIndex*2) % schemes[x].skipLength()) == 0){
@@ -1086,14 +1088,51 @@ class App extends Component {
         this.updateSequencerTrack(i, steps)
       } else {
         // set to master seq, spread playing evenly across non scheme pix
+
         this.updateSequencerTrack(i, this.state.masterSequencerSteps, currentNonSchemePix, numNonSchemePix)
       }
 
       if(!isSchemePix){
         // we found another nonschem pix, increment spreader counter
+
+        let minStep, maxStep
+        minStep = Math.floor(this.sequencerTrackLength/this.state.synths.length) * currentNonSchemePix
+        maxStep = ( Math.floor(this.sequencerTrackLength/this.state.synths.length) * (currentNonSchemePix+1) ) - 1
+
+        for(var z=minStep; z<maxStep+1; z++){
+          if(this.state.darkMode){
+            msColors[z] = this.colorNameToDarkHex(this.state.synths[i].color)
+          } else {
+            msColors[z] = this.colorNameToHex(this.state.synths[i].color)
+          }
+        }
+
         currentNonSchemePix++
       }
     }
+
+    if(msColors.length > 0){
+      this.setState({masterSequencerColors: msColors})
+    }
+  }
+
+  updateMasterSequencerColors(){
+    // let msColors = []
+    // for(var i=0; i<this.state.synths.length; i++){
+    //   if(this.synths.parentSynthId){
+    //     // dont show on seq if repeat synth
+    //     continue
+    //   }
+
+    //   let minStep, maxStep
+    //   minStep = Math.floor(steps.length/this.state.synths.length) * currentNonSchemePix
+    //   maxStep = ( Math.floor(steps.length/this.state.synths.length) * (currentNonSchemePix+1) ) - 1
+
+    //   for(var y=minStep; y<=maxStep; y++){
+    //     // console.log( 'lol its ', this.state.pixels[ this.state.synths[i].index ].color )
+    //     msColors[y] = this.state.pixels[ this.state.synths[i].index ].color
+    //   }
+    // }
 
   }
 
@@ -1358,8 +1397,9 @@ class App extends Component {
         </div>
       )
 
+
       masterSequencer = (
-        <MasterSequencer lightStep={ this.state.lightStep } toggleMasterSequencerStep={ this.toggleMasterSequencerStep } steps={ this.state.masterSequencerSteps } />
+        <MasterSequencer lightStep={ this.state.lightStep } toggleMasterSequencerStep={ this.toggleMasterSequencerStep } steps={ this.state.masterSequencerSteps } colors={ this.state.masterSequencerColors } />
       )
 
       soundShowsContainer = (

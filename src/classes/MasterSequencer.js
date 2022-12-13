@@ -1,12 +1,24 @@
 function MasterSequencer(props){
 
   let buttons = props.steps.map((step, stepIndex) => { 
-    let seqClasses = props.steps[stepIndex] ? "sequencer-button enable" : "sequencer-button disable"
+    let seqClasses
+    let bgColor = "#000"
+    if(props.steps[stepIndex]){
+      seqClasses = "sequencer-button enable"
+      if(props.colors){
+        bgColor = props.colors[stepIndex]
+      }
+      
+    } else {
+      seqClasses = "sequencer-button disable"
+    }
+
     if(props.lightStep === stepIndex){
       seqClasses += " lit"
+      bgColor = "#ff0"
     }
     // value={ props.steps[stepIndex] ? "On" : "Off"}
-    return (<input className={ seqClasses } onClick={ () => props.toggleMasterSequencerStep(stepIndex) } type="button"  />) })
+    return (<input style={{ backgroundColor: bgColor }} className={ seqClasses } onClick={ () => props.toggleMasterSequencerStep(stepIndex) } type="button"  />) })
 
   return(
     <div className="sequencer-container">
