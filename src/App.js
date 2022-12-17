@@ -57,6 +57,8 @@ class App extends Component {
       playing: false,
       masterGain: 0.36,
       masterSequencerSteps: new Array(this.sequencerTrackLength).fill(true),
+      masterSequencerColors: new Array(this.sequencerTrackLength).fill("#000"),
+      schemeColors: [],
       randomizePixels: false,
       randomizePixelsInterval: 3600,
       noteLength: 3.9,
@@ -343,10 +345,7 @@ class App extends Component {
   }
 
   toggleOnline(){
-      console.log( 'duh!' )
-
     this.setState(prevState => ({online: !prevState.online}), () => {
-      console.log( 'its this ', this.state.online )
       if(!this.state.online){
         this.stopOnline()
       } else {
@@ -618,8 +617,8 @@ class App extends Component {
   }
 
   randomWaveform(){
-    return "sine"
-    // return ["sine","square","sawtooth","triangle"].sort(() => Math.random() - 0.5)[0]
+    // return "sine"
+    return ["sine","square","sawtooth","triangle"].sort(() => Math.random() - 0.5)[0]
   }
 
   updateSequencerTracks(){
@@ -688,7 +687,6 @@ class App extends Component {
   }
 
   pixelsFromColors(colorDatas){
-    console.log( 'coldsa ', colorDatas )
     return colorDatas.map( (colorData) => this.newPixel(colorData.color, colorData.userID))
   }
 
@@ -1004,6 +1002,10 @@ class App extends Component {
 
     // seq ui colors
     let msColors = new Array(this.sequencerTrackLength).fill("#000")
+    let nonSchemeColors = []
+
+    // dict it so that we can easily check if a color is included elsewhere
+    let schemeColors = {}
 
     for(var i=0; i<this.state.synths.length; i++){
       // determine steps for each synth
@@ -1022,6 +1024,9 @@ class App extends Component {
         let matchedColorIndex = matchedSchemes[x].matchedColors.indexOf(this.state.synths[i].color)
         if(matchedColorIndex > -1){
           isSchemePix = true
+          
+          schemeColors[this.state.synths[i].color] = true
+
           if(this.state.schemeMode == SCHEMEMODE1){
 
             // add in more to play if scheme  was matched
@@ -1094,26 +1099,28 @@ class App extends Component {
 
       if(!isSchemePix){
         // we found another nonschem pix, increment spreader counter
-
-        let minStep, maxStep
-        minStep = Math.floor(this.sequencerTrackLength/this.state.synths.length) * currentNonSchemePix
-        maxStep = ( Math.floor(this.sequencerTrackLength/this.state.synths.length) * (currentNonSchemePix+1) ) - 1
-
-        for(var z=minStep; z<maxStep+1; z++){
-          if(this.state.darkMode){
-            msColors[z] = this.colorNameToDarkHex(this.state.synths[i].color)
-          } else {
-            msColors[z] = this.colorNameToHex(this.state.synths[i].color)
-          }
-        }
-
         currentNonSchemePix++
+        // collect all the nonscheme colors
+        nonSchemeColors.push(this.state.synths[i].color)
       }
     }
 
-    if(msColors.length > 0){
-      this.setState({masterSequencerColors: msColors})
+    // get array of ui step colors woo
+    for(var a=0; a<nonSchemeColors.length; a++){
+      let minStep, maxStep
+      minStep = Math.floor(this.sequencerTrackLength/nonSchemeColors.length) * a
+      maxStep = ( Math.floor(this.sequencerTrackLength/nonSchemeColors.length) * (a+1) ) - 1
+
+      for(var z=minStep; z<maxStep+1; z++){
+        if(this.state.darkMode){
+          msColors[z] = this.colorNameToDarkHex(nonSchemeColors[a])
+        } else {
+          msColors[z] = this.colorNameToHex(nonSchemeColors[a])
+        }
+      }
     }
+
+    this.setState({masterSequencerColors: msColors, schemeColors: schemeColors})
   }
 
   updateMasterSequencerColors(){
@@ -1281,7 +1288,7 @@ class App extends Component {
       } else {
         hexColor = this.colorNameToDarkHex(synth.color)
       }
-      return <SoundShow color={ hexColor } />
+      return <SoundShow isScheme={ this.state.schemeColors[synth.color] } color={ hexColor } />
     })
 
     let pixels

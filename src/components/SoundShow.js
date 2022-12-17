@@ -5,7 +5,13 @@ function SoundShow(props){
   if(props.color){
     classes += " playing"
     color = props.color
+
+    if(props.isScheme){
+      classes += " highlight"
+    }
+
   }
+
   return (
     <div style={ {backgroundColor: color} } className={ classes }>
     </div>

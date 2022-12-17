@@ -45,14 +45,14 @@
 /*  border: 12px solid white;*/
 /*box-shadow: 0 0 0 8px #fff;*/
   outline:  12px solid #fff;
-  outline-offset: -12px;
+  outline-offset: -16px;
+  border-radius: 12px;
 }
 
 .container.dark-mode .pixels-container .pixel {
 /*  border: 12px solid white;*/
 /*box-shadow: 0 0 0 8px #fff;*/
-  outline:  12px solid #000;
-  outline-offset: -12px;
+  outline:  12px solid #fff;
 }
 .user-pixels-container .pixel {
   min-height:  8vw;
@@ -118,11 +118,10 @@ div.simple-control {
   display: block;
 }
 
-div.simple-control button {
-  /*margin-bottom: 2em;*/
-}
 .container.dark-mode div.simple-control button {
-  border: 1px solid #111;
+/*  border: 1px solid #19f;*/
+/*  border: 10px solid #04a;*/
+  border: 10px solid #111;
 }
 
 div.simple-control button:active {
@@ -239,11 +238,19 @@ div.knob-container div {
   margin-top: 1vw;
   margin-bottom: 1vw;
   overflow: hidden;
-  border: 1px solid black;
   background-color: transparent;
   
   border: 1px solid #fff;
   /*transition: background-color 0.3s;*/
+  transform: translateY(0vh);
+  transition: transform 2s, background-color 0.05s;
+}
+
+.sound-show.highlight {
+  box-shadow: 0 0 0 5px #fff;
+  transform: translateY(-1vh);
+  transition: transform 2s, box-shadow 2s;
+
 }
 
 .container.dark-mode .soundshower-container .sound-show {
@@ -252,28 +259,64 @@ div.knob-container div {
 
 .sound-show.playing {
   /*background-color: #0f0;*/
-  transition: background-color 0.05s;
+/*  transition: background-color 0.05s;*/
   /*width: 3.25%;*/
 }
 
+.sound-show.highlight {
+
+}
+
 .transport-control {
-  box-shadow: 0 0 0 5px black;
   text-align: center;
   display: inline-block;
   font-size: 1.2em;
   width: 25vw;
   height: 4vw;
+
+  background-color: #000;
+  color: #fff;
+  border-radius: 12px;
+
+  transition: transform 0.3s;
+  transform: translateY(0vh);
+  box-shadow: 0 0 0 5px #fff;
+  z-index: 1000;
+  position: relative;
+}
+
+/*just cool
+  background-color: rgba(255, 255, 255, 0.4);
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);*/
+
+.transport-control:active {
+  transform: translateY(1vh);
 }
 
 .transport-control.white-border {
+  /*box-shadow:
+    0 0 60px 6px #fff,  
+    0 0 100px 16px #f0f, 
+    0 0 140px 18px #0ff;*/ 
+  background-color: #bbb;
   box-shadow: 0 0 0 5px #fff;
+  transform: translateY(1vh);
+  z-index: 999;
 }
 
 .container.dark-mode .transport-control.white-border {
   /*activated button*/
-  box-shadow: 0 0 0px 5px #333;
+  box-shadow:
+    0 0 0 5px #222;
+  transform: translateY(1vh);
+  background-color: #222;
 }
+  /*0 0 30px 2px rgba(180,0,180,0.1),
+  0 0 80px 6px rgba(0,0,180,0.1),
+  0 0 120px 8px rgba(0,0,255,0.2)
 
+*/
 .transport-control.green-border {
   box-shadow: 0 0 0 5px #0f0;
 }
@@ -290,7 +333,25 @@ div.knob-container div {
   box-shadow: 0 0 0 5px #222;
 }
 
-.play {
+/*button specific bg colors*/
+.play.white-border {
+  background-color: #0b0;
+}
+
+.stop.white-border {
+  background-color: #b00;
+}
+
+
+.container.dark-mode .play.white-border {
+  background-color: #020;
+}
+
+.container.dark-mode .stop.white-border {
+  background-color: #200;
+}
+
+/*.play {
   background-color: #0f0;
   color: #0b0;
 }
@@ -377,7 +438,7 @@ div.knob-container div {
 .dark {
   background-color: #000;
   color: #eee;
-}
+}*/
 
 .sequencer-container {
   width: 100vw;
@@ -389,6 +450,7 @@ div.knob-container div {
   width: 6.25%;
   height: 8vh;
   min-height: 20px;
+  border-radius: 8px;
   background-color: #ddd;
   transition: background-color 0.28s;
 }
@@ -396,7 +458,6 @@ div.knob-container div {
 .container.dark-mode .sequencer-button {
 /*  border: 1px solid #333;*/
   background-color: #000;
-  border-radius: 8px;
 }
 
 .container.dark-mode .sequencer-button.lit {
@@ -469,6 +530,7 @@ div.knob-container div {
   }
 
   .user-pixels-container {
+    margin-top: 2vh;
     height: 50vh;
     overflow: hidden;
   }
@@ -498,6 +560,10 @@ div.knob-container div {
   }
 
   .simple-control button {
+    font-size: 5em;
+    border-radius: 16px;
+    color: #00b;
+    border: 10px solid #555;
     margin-left: 2.4vw;
     width: 12vw;
     height:  12vw;
@@ -506,7 +572,7 @@ div.knob-container div {
   .container.dark-mode .simple-control button {
     background-color: #333;
     color: #111;
-    border: 1px solid #333;
+    border: 10px solid #fff;
   }
 
   .simple-control.wide button {
