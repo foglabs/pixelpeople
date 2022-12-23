@@ -1314,22 +1314,6 @@ class App extends Component {
       )
     }
 
-    let liveText, liveClasses, liveContainer
-    liveClasses = "live-container"
-    if(this.state.online){
-      liveClasses += " live"
-      liveText = "LIVE"
-    }
-    if(this.state.groupMode){
-      liveText += " (GROUP)"
-    }
-
-    liveContainer = (
-      <div className={ liveClasses }>
-        { liveText }
-      </div>
-    )
-
     let simpleControlClasses = "simple-control"
     let randomizePixelsIntervalControl, numPixControl
     if(this.state.randomizePixels){
