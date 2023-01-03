@@ -17,8 +17,12 @@ function MasterSequencer(props){
       seqClasses += " lit"
       bgColor = "#ff0"
     }
+
+    if(props.canPlay[stepIndex]){
+      seqClasses += " can-play"
+    }
     // value={ props.steps[stepIndex] ? "On" : "Off"}
-    return (<input style={{ backgroundColor: bgColor }} className={ seqClasses } onClick={ () => props.toggleMasterSequencerStep(stepIndex) } type="button"  />) })
+    return (<input style={{ backgroundColor: bgColor }} className={ seqClasses } onClick={ () => props.toggleMasterSequencerStep(stepIndex) } type="button" />) })
 
   return(
     <div className="sequencer-container">

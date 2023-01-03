@@ -8,7 +8,19 @@ const clients = {};
 const COLORS = [ "red", "red-orange", "orange", "orange-yellow", "yellow", "yellow-green", "green", "green-blue", "blue", "blue-violet", "violet", "violet-red"]
 
 var groupModeEnabled = false
+
+var beatModeEnabled = false
+var beatModeSeqStartTime = false
+var beatModeCurrentStep = false
+
+var beatModeTempo = false
+var beatModeSteps = false
+var beatChecks = new Array(sequencerTrackLength).fill(false)
+
+var sequencerTrackLength = 16
+
 var groupMasterUserID = false
+
 
 // This code generates unique userid for every beepr
 function getUniqueID() {
@@ -55,16 +67,40 @@ function startGroupMode(masterUserID){
 function stopGroupMode(){
   groupModeEnabled = false
   groupMasterUserID = false
+  
+  beatModeEnabled = false
+  beatModeSeqStartTime = false
+  beatModeCurrentStep = false
+  beatModeTempo = false
+  beatModeSteps = false
+
   Object.keys(clients).forEach( (userID) => {
     let data = {userID: userID, groupMode: "stop", groupMasterID: false}
     sendDataToClient(userID, data)   
   })
 }
 
+function startBeatMode(masterUserID, tempo, steps){
+  beatModeEnabled = true
+  beatModeSeqStartTime = performance.now()
+  beatModeCurrentStep = 0
+  beatModeTempo = tempo
+  beatModeSteps = steps
+
+  groupMasterUserID = masterUserID
+  Object.keys(clients).forEach( (userID) => {
+    let data = {userID: userID, groupMode: "beat", groupMasterID: groupMasterUserID}
+    sendDataToClient(userID, data)   
+  })
+}
+
 function sendDataToClient(userID, data){
-  let msg = JSON.stringify(data)
-  console.log( 'sending msg ', msg )
-  clients[userID].send(msg)
+  if(clients[userID]){
+    let msg = JSON.stringify(data)
+    console.log( 'sending msg ', msg )
+    clients[userID].send(msg)  
+  }
+  
 }
 
 function userColors(){
@@ -98,7 +134,11 @@ wsServer.on('request', function(request) {
   clients[userID].lives = 2
 
   if(groupModeEnabled){
+    // tell the new client about group mode
     sendDataToClient(userID, {groupMode: "start", groupMasterID: groupMasterUserID})
+  } else if(beatModeEnabled){
+    // tell the new client about beat mode
+    sendDataToClient(userID, {groupMode: "beat", groupMasterID: groupMasterUserID})
   }
 
   // tell the new client who they is and what the pixels are
@@ -156,6 +196,21 @@ wsServer.on('request', function(request) {
           if(data.changeColor){
             // if user asked to change their color, do it
             clients[data.userID].pixelColor = data.changeColor
+          } else if(data.lightStep){
+            beatModeCurrentStep = parseInt(data.lightStep)
+          } else if(data.beat && beatModeEnabled){
+            // this is a user tapping their button and sending a 'beat' event
+
+            // if(current step goes with data.userID){
+            if(isBeatUserID(beatModeCurrentStep, data.userID)){
+              // all this step to play since user tapped butt in time
+              console.log( 'hey i got it', beatModeCurrentStep )
+              beatChecks[beatModeCurrentStep] = true
+              sendDataToClient(groupMasterUserID, { beatChecks: beatChecks })
+            }
+
+
+
           } else if(data.disconnect){
             console.log( 'disconnect ', data.userID )
             deleteClient(data.userID)
@@ -164,11 +219,20 @@ wsServer.on('request', function(request) {
               // silence all users other than sender
               console.log( 'starting groupmode with master ', data.userID )
               startGroupMode(data.userID)
+            } else if(data.groupMode === "beat"){
+              // silence all users other than sender
+              console.log( 'starting beatmode with beatmaster ', data.userID )
+
+              // set tempo to use for beat tap timers
+              startBeatMode(data.userID, data.tempo, data.steps)
             } else {
               // go back to normal
               console.log( 'stopping groupmode :: master ', data.userID )
               stopGroupMode()
             }
+          } else if(data.changeTempo){
+            // receive tempo from beatmaster change
+            beatModeTempo = data.changeTempo
           }
 
           // then update everybody with all the colors
@@ -180,6 +244,53 @@ wsServer.on('request', function(request) {
     }
   })
 
+  setInterval(() => {
+    // beatmode loop -> check whether we expect beattap now
+    if(beatModeEnabled){
+      if(beatModeCurrentStep == sequencerTrackLength-1){
+          resetBeatChecks()
+
+          // tell client thbat beat checks are off!
+          sendDataToClient(groupMasterUserID, { currentStep: beatModeCurrentStep, beatChecks: beatChecks })
+      }
+
+      // // every sequencer run
+      // // someone is responsible for tapping each step
+
+      // if(performance.now() > ( beatModeSeqStartTime + (stepLength(beatModeTempo) * beatModeCurrentStep) ) ){
+      //   console.log( `finished ${beatModeCurrentStep}` )
+      //   beatModeCurrentStep += 1
+
+      //   if(beatModeCurrentStep == sequencerTrackLength){
+      //     // reset loop, end of seq
+      //     console.log( 'finished seq, resetting' )
+      //     beatModeCurrentStep = 0
+      //     beatModeSeqStartTime = performance.now()
+      //     resetBeatChecks()
+
+      //     // tell client thbat beat checks are off!
+      //     sendDataToClient(groupMasterUserID, { currentStep: beatModeCurrentStep, beatChecks: beatChecks })
+      //   }
+      // }
+    }
+
+  }, 1)
+
+  function stepLength(tempo){
+    // tempotosteptime
+    return Math.floor(15000/tempo)
+  }
+
+  function resetBeatChecks(){
+    // set every beat block bool to false, will later flip true if we get beattap
+    beatChecks = new Array(sequencerTrackLength).fill(false)
+  }
+
+  function isBeatUserID(step, userID){
+    // not real
+    return true
+    return beatModeStepIDs[step] == userID
+  }
 
   setInterval(() => {
     let data = {ping: true}

@@ -208,6 +208,7 @@ export default () => {
     } else if(action.data.removeTrack){
       sequencer.removeTrack(action.data.removeTrack.index)
     } else if(action.data.changeTempo){
+      // this is steptime coming in, not tempo
       sequencer.changeTempo(action.data.changeTempo.value)
     } else if(action.data.changeRandomizePixels){
       sequencer.changeRandomizePixels(action.data.changeRandomizePixels.value)

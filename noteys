@@ -205,3 +205,26 @@ restyle simple controls
 make actual transport buttons,; no colors
 
 
+
+
+
+beat mode
+  group mode but beat
+  beatmode initiator (master) sends their tempo to socketserv
+  ss stores it (resend on master's tempo change)
+
+  block synths from playing for each sequencer step unless ss receives beatbutton tap from corresponding user
+  
+  use master tempo to derive time limits for each beatbutton tap from users
+
+  will have to be able to calculate pixels -> sequencer steps IN SOCKET SERVER
+    use this to match up client ids -> sequencer steps -> beatbutton timers
+
+  if ss receives beatbutton tap from matching client befoere current sequencer step timer expires, unblock step (so it plays)
+    do blocking (or not) from master's state at App.js:153
+
+
+beattoggle button turns it on, but off doesnt work
+
+
+
