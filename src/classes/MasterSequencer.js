@@ -1,7 +1,7 @@
 function MasterSequencer(props){
 
   let buttons = props.steps.map((step, stepIndex) => { 
-    let seqClasses
+    let seqClasses, beatBorder
     let bgColor = "#000"
     if(props.steps[stepIndex]){
       seqClasses = "sequencer-button enable"
@@ -18,11 +18,11 @@ function MasterSequencer(props){
       bgColor = "#ff0"
     }
 
-    if(props.canPlay[stepIndex]){
-      seqClasses += " can-play"
+    if(props.beatColors[stepIndex]){
+      beatBorder = "12px solid " + props.beatColors[stepIndex]
     }
     // value={ props.steps[stepIndex] ? "On" : "Off"}
-    return (<input style={{ backgroundColor: bgColor }} className={ seqClasses } onClick={ () => props.toggleMasterSequencerStep(stepIndex) } type="button" />) })
+    return (<input style={{ border: beatBorder, backgroundColor: bgColor }} className={ seqClasses } onClick={ () => props.toggleMasterSequencerStep(stepIndex) } type="button" />) })
 
   return(
     <div className="sequencer-container">

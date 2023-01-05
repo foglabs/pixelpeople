@@ -224,7 +224,11 @@ beat mode
     do blocking (or not) from master's state at App.js:153
 
 
-beattoggle button turns it on, but off doesnt work
-
+*beattoggle button turns it on, but off doesnt work
+ 
+users now send beatcolor as data when they tap beat to ss
+  need to store color in beatchecks at step
+  beatchecks will be sent to master
+  master need to use beatchecks to determine mastersequencer border colors, instead of just t/f
 
 

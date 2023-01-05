@@ -556,8 +556,13 @@ div.knob-container div {
   background-color: #dd0;
 }
 
+
+.sequencer-button.can-play {
+  border: 12px solid;
+}
+
 .container.dark-mode .sequencer-button.can-play {
-  border: 12px solid #00f;
+  border: 12px solid;
 }
 
 .enable {

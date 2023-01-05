@@ -7,6 +7,10 @@ const clients = {};
 
 const COLORS = [ "red", "red-orange", "orange", "orange-yellow", "yellow", "yellow-green", "green", "green-blue", "blue", "blue-violet", "violet", "violet-red"]
 
+const BEATCOLORS = ["#212121","#494440","#323a45","#5b616b","#112e51","#205493","#0071bc","#4773aa","#046b99","#00a6d2","#02bfe7","#2e8540","#4aa564","#fdb81e","#f9c642","#981b1e","#cd2026","#e31c3d","#aeb0b5","#d6d7d9","#e4e2e0","#8ba6ca","#dce4ef","#e1f3f8","#94bfa2","#e7f4e4","#fad980","#fff1d2","#f9dede"]
+
+var availableBeatColors = BEATCOLORS.sort(() => Math.random() - 0.5)
+
 var groupModeEnabled = false
 
 var beatModeEnabled = false
@@ -31,6 +35,16 @@ function getUniqueID() {
 function randomColor(){
   // this mutates the muphuckin array but it doesnt matter
   return COLORS.sort(() => Math.random() - 0.5)[0]
+}
+
+function randomBeatColor(){
+  // this mutates the muphuckin array but it doesnt matter
+
+  if(availableBeatColors.length === 0){
+    // if we run out 
+    availableBeatColors = BEATCOLORS.sort(() => Math.random() - 0.5)
+  }
+  return availableBeatColors.sort(() => Math.random() - 0.5)[0]
 }
 
 function deleteClient(userID){
@@ -59,7 +73,7 @@ function startGroupMode(masterUserID){
   groupModeEnabled = true
   groupMasterUserID = masterUserID
   Object.keys(clients).forEach( (userID) => {
-    let data = {userID: userID, groupMode: "start", groupMasterID: groupMasterUserID}
+    let data = {userID: userID, groupMode: "group", groupMasterID: groupMasterUserID}
     sendDataToClient(userID, data)   
   })
 }
@@ -89,8 +103,8 @@ function startBeatMode(masterUserID, tempo, steps){
 
   groupMasterUserID = masterUserID
   Object.keys(clients).forEach( (userID) => {
-    let data = {userID: userID, groupMode: "beat", groupMasterID: groupMasterUserID}
-    sendDataToClient(userID, data)   
+    let data = {userID: userID, groupMode: "beat", groupMasterID: groupMasterUserID, beatColor: clients[userID].beatColor}
+    sendDataToClient(userID, data)
   })
 }
 
@@ -131,14 +145,16 @@ wsServer.on('request', function(request) {
   clients[userID] = connection
   // init rand color for new user, will be sent when we 
   clients[userID].pixelColor = randomColor()
+  clients[userID].beatColor = randomBeatColor()
+  console.log( 'new use beat color', clients[userID].beatColor )
   clients[userID].lives = 2
 
   if(groupModeEnabled){
     // tell the new client about group mode
-    sendDataToClient(userID, {groupMode: "start", groupMasterID: groupMasterUserID})
+    sendDataToClient(userID, {groupMode: "group", groupMasterID: groupMasterUserID})
   } else if(beatModeEnabled){
     // tell the new client about beat mode
-    sendDataToClient(userID, {groupMode: "beat", groupMasterID: groupMasterUserID})
+    sendDataToClient(userID, {groupMode: "beat", groupMasterID: groupMasterUserID, beatColor: clients[userID].beatColor })
   }
 
   // tell the new client who they is and what the pixels are
@@ -202,20 +218,19 @@ wsServer.on('request', function(request) {
             // this is a user tapping their button and sending a 'beat' event
 
             // if(current step goes with data.userID){
-            if(isBeatUserID(beatModeCurrentStep, data.userID)){
+            if( isBeatUserID(beatModeCurrentStep-1, data.userID) || isBeatUserID(beatModeCurrentStep, data.userID) ){
               // all this step to play since user tapped butt in time
-              console.log( 'hey i got it', beatModeCurrentStep )
-              beatChecks[beatModeCurrentStep] = true
+              console.log( 'hey i got beat', beatModeCurrentStep )
+              // beatChecks[beatModeCurrentStep] = true
+              beatChecks[beatModeCurrentStep] = clients[data.userID].beatColor
               sendDataToClient(groupMasterUserID, { beatChecks: beatChecks })
             }
-
-
 
           } else if(data.disconnect){
             console.log( 'disconnect ', data.userID )
             deleteClient(data.userID)
           } else if(data.groupMode){
-            if(data.groupMode === "start"){
+            if(data.groupMode === "group"){
               // silence all users other than sender
               console.log( 'starting groupmode with master ', data.userID )
               startGroupMode(data.userID)

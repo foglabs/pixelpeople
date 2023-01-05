@@ -73,7 +73,6 @@ class App extends Component {
       groupMode: false,
       // who is da masta
       groupMasterID: false,
-      beatMode: false,
       beatChecks: new Array(this.sequencerTrackLength).fill(false),
 
       heldDown: false,
@@ -151,20 +150,21 @@ class App extends Component {
 
             // console.log( 'playing synth', action.data.playSynth.index )
 
-            if(this.state.beatMode && this.isMaster()){
+            if(this.isBeatMode() && this.isMaster()){
 
               // checking beat check, but server doesnt yet diff which users tapping
-              if( this.state.beatChecks[this.state.lightStep] ){
+              if( this.state.masterSequencerSteps[this.state.lightStep] && this.state.beatChecks[this.state.lightStep] ){
                 this.state.synths[action.data.playSynth.index].play()
               }
             } else if(!this.state.groupMode || this.isMaster() ){
+              // save the check of group OR beatmode ^
+
               // regular or group mode play
               this.state.synths[action.data.playSynth.index].play()
             }
 
-            
           } else if(action.data.lightStep){
-            if(this.state.beatMode && this.isMaster()){
+            if(this.isBeatMode() && this.isMaster()){
               let data = JSON.stringify({userID: this.state.userID, lightStep: action.data.lightStep});
               client.send(data)
             }
@@ -275,18 +275,20 @@ class App extends Component {
 
         if(data.groupMode){
           // console.log( 'groupmoddata ', data )
-          if(data.groupMode === "start"){
+          if(data.groupMode === "group"){
+            // start group mode
             // console.log( 'starting groupmode with master ', data.groupMasterID )
 
-            this.setState({groupMode: true, groupMasterID: data.groupMasterID})
+            this.setState({groupMode: "group", groupMasterID: data.groupMasterID})
 
             if(data.groupMasterID !== this.state.userID){
               this.changeMasterGain(0)
             }
 
           } else if(data.groupMode === "beat"){
+            // start beat mode
 
-            this.setState({beatMode: true, groupMasterID: data.groupMasterID})
+            this.setState({groupMode: "beat", groupMasterID: data.groupMasterID, beatColor: data.beatColor})
 
             if(data.groupMasterID !== this.state.userID){
               this.changeMasterGain(0)
@@ -294,7 +296,7 @@ class App extends Component {
 
           } else {
 
-            this.setState({beatMode: false, groupMode: false, groupMasterID: false})
+            this.setState({groupMode: false, groupMasterID: false})
             this.changeMasterGain(this.state.masterGain)
           }
         }
@@ -313,7 +315,15 @@ class App extends Component {
   }
 
   isMaster(){
-    return ( (this.state.groupMode || this.state.beatMode) && this.state.groupMasterID == this.state.userID)
+    return ( ( this.isGroupMode() || this.isBeatMode() ) && this.state.groupMasterID == this.state.userID)
+  }
+  
+  isGroupMode(){
+    return this.state.groupMode == "group"
+  }
+  
+  isBeatMode(){
+    return this.state.groupMode == "beat"
   }
 
   restartOnline(){
@@ -372,16 +382,16 @@ class App extends Component {
     // send server start/stop group mode
     // when starting, server will mute everyone other than the user that sent this
 
-    let groupModeValue = this.state.groupMode ? "stop" : "start"
+    let groupModeValue = this.isGroupMode() ? "stop" : "group"
     // always turn off beatmode since its either already off or we're using this method to turn it off
-    client.send(JSON.stringify({userID: this.state.userID, groupMode: groupModeValue, beatMode: false}))
+    client.send( JSON.stringify({userID: this.state.userID, groupMode: groupModeValue}) )
   }
 
   toggleBeatMode(){
     // send server start/stop group mode
     // when starting, server will mute everyone other than the user that sent this
 
-    let beatModeValue = this.state.beatMode ? "stop" : "beat"
+    let beatModeValue = this.isBeatMode() ? "stop" : "beat"
 
     // send tempo and current seq steps so ss can keep track
     client.send(JSON.stringify({userID: this.state.userID, groupMode: beatModeValue, tempo: this.state.tempo, steps: this.state.masterSequencerSteps}))
@@ -444,7 +454,7 @@ class App extends Component {
 
   getFrequency(colorName){
     // select which set of frequencies
-    if(this.state.groupMode){
+    if(this.isGroupMode()){
       return this.colorNameToFriendlyFreq(colorName)
     } else {
       return this.colorNameToFreq(colorName)
@@ -1321,6 +1331,7 @@ class App extends Component {
   tapBeatButton(){
     if(this.state.online){
 
+      // will get users beat color from clients[] in server
       client.send(JSON.stringify({userID: this.state.userID, beat: true}))
     }
   }
@@ -1394,9 +1405,9 @@ class App extends Component {
 
       if(this.state.online){
         // show group mode toggle only when we're online
-        transportButtons.push(<TransportControl thin={ this.state.moreMenu } onClick={ this.toggleGroupMode } active={ this.state.groupMode } code="grpp" />)
+        transportButtons.push(<TransportControl thin={ this.state.moreMenu } onClick={ this.toggleGroupMode } active={ this.isGroupMode() } code="grpp" />)
 
-        transportButtons.push(<TransportControl thin={ this.state.moreMenu } onClick={ this.toggleBeatMode } active={ this.state.beatMode } code="beat" />)
+        transportButtons.push(<TransportControl thin={ this.state.moreMenu } onClick={ this.toggleBeatMode } active={ this.isBeatMode() } code="beat" />)
       } else {
         // only show rand button in offline
         transportButtons.push(<TransportControl thin={ this.state.moreMenu } onClick={ this.toggleRandomizePixels } active={ this.state.randomizePixels } code="rand" />)
@@ -1428,7 +1439,7 @@ class App extends Component {
     )
 
     let userControls, masterSequencer, soundShowsContainer, pixelsContainer
-    if( !this.state.online || !(this.state.groupMode || this.state.beatMode) || this.isMaster() ){
+    if( !this.state.online || !( this.isGroupMode() || this.isBeatMode() ) || this.isMaster() ){
       userControls = (
         <div className="user-controls-container">
 
@@ -1449,7 +1460,7 @@ class App extends Component {
 
 
       masterSequencer = (
-        <MasterSequencer lightStep={ this.state.lightStep } canPlay={ this.state.beatChecks } toggleMasterSequencerStep={ this.toggleMasterSequencerStep } steps={ this.state.masterSequencerSteps } colors={ this.state.masterSequencerColors } />
+        <MasterSequencer lightStep={ this.state.lightStep } beatColors={ this.state.beatChecks } toggleMasterSequencerStep={ this.toggleMasterSequencerStep } steps={ this.state.masterSequencerSteps } colors={ this.state.masterSequencerColors }  />
       )
 
       soundShowsContainer = (
@@ -1466,23 +1477,25 @@ class App extends Component {
     }
 
     let colorPaletteClasses = "pixels-container"
-    let beatButton
+    let beatButton, beatColor
     if(this.state.online){
 
-      if(this.state.groupMode && !this.isMaster()){
+      if(this.isGroupMode() && !this.isMaster()){
         // if grpp and you are user, show big color selector
         colorPaletteClasses += " big"
       }
 
-      if(this.state.beatMode && !this.isMaster()){
+
+      if(this.isBeatMode() && !this.isMaster()){
         beatButton = (
           <button className="beat-button" onClick={ this.tapBeatButton } />
         )
+
+        beatColor = this.state.beatColor
       }
     }
-
     return (
-      <div className={ containerClasses } onTouchEnd={ this.stopHoldDown } onMouseUp={ this.stopHoldDown } >
+      <div style={ {backgroundColor: beatColor} } className={ containerClasses } onTouchEnd={ this.stopHoldDown } onMouseUp={ this.stopHoldDown } >
 
         <div className={ colorPaletteClasses } >
           { colorPalette }
