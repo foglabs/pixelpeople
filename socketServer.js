@@ -146,7 +146,6 @@ wsServer.on('request', function(request) {
   // init rand color for new user, will be sent when we 
   clients[userID].pixelColor = randomColor()
   clients[userID].beatColor = randomBeatColor()
-  console.log( 'new use beat color', clients[userID].beatColor )
   clients[userID].lives = 2
 
   if(groupModeEnabled){

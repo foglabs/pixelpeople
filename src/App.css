@@ -143,8 +143,8 @@ div.simple-control {
   font-size: 0.6em;
   overflow-x: hidden;
   display: inline-block;
-  min-width: 16%;
-  width: 16%;
+  min-width: 25vw;
+  width: 25vw;
   color:  #000;
 }
 
@@ -152,8 +152,8 @@ div.simple-control {
 div.simple-control button {
 /*  border: 1px solid #fff;*/
   margin-left: 6.5vw;
-  width:  7Svw;
-  height:  7Svw;
+  width:  7vw;
+  height:  7vw;
   display: block;
 
   border-right: 10px solid #ccc;
