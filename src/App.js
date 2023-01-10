@@ -95,6 +95,7 @@ class App extends Component {
     this.changeNumPix = this.changeNumPix.bind(this)
 
     this.changeColor = this.changeColor.bind(this)
+    this.addOnlinePixel = this.addOnlinePixel.bind(this)
 
     this.playSounds = this.playSounds.bind(this)
     this.stopSounds = this.stopSounds.bind(this)
@@ -103,6 +104,7 @@ class App extends Component {
     this.toggleDarkMode = this.toggleDarkMode.bind(this)
     this.toggleGroupMode = this.toggleGroupMode.bind(this)
     this.toggleBeatMode = this.toggleBeatMode.bind(this)
+    this.toggleAddMode = this.toggleAddMode.bind(this)
     this.toggleRandomizePixels = this.toggleRandomizePixels.bind(this)
     this.toggleCoarse = this.toggleCoarse.bind(this)
     this.incrementSchemeMode = this.incrementSchemeMode.bind(this)
@@ -156,7 +158,7 @@ class App extends Component {
               if( this.state.masterSequencerSteps[this.state.lightStep] && this.state.beatChecks[this.state.lightStep] ){
                 this.state.synths[action.data.playSynth.index].play()
               }
-            } else if(!this.state.groupMode || this.isMaster() ){
+            } else if(!(this.state.groupMode == "group" || this.state.groupMode == "beat") || this.isMaster() ){
               // save the check of group OR beatmode ^
 
               // regular or group mode play
@@ -294,6 +296,10 @@ class App extends Component {
               this.changeMasterGain(0)
             }
 
+          } else if(data.groupMode === "add"){
+            // start beat mode
+
+            this.setState({groupMode: "add", beatColor: data.beatColor})
           } else {
 
             this.setState({groupMode: false, groupMasterID: false})
@@ -324,6 +330,10 @@ class App extends Component {
   
   isBeatMode(){
     return this.state.groupMode == "beat"
+  }
+
+  isAddMode(){
+    return this.state.groupMode == "add"
   }
 
   restartOnline(){
@@ -395,6 +405,16 @@ class App extends Component {
 
     // send tempo and current seq steps so ss can keep track
     client.send(JSON.stringify({userID: this.state.userID, groupMode: beatModeValue, tempo: this.state.tempo, steps: this.state.masterSequencerSteps}))
+  }
+
+  toggleAddMode(){
+    // send server start/stop group mode
+    // when starting, server will mute everyone other than the user that sent this
+
+    let addModeValue = this.isAddMode() ? "stop" : "add"
+
+    // send tempo and current seq steps so ss can keep track
+    client.send(JSON.stringify({userID: this.state.userID, groupMode: addModeValue}))
   }
 
   toggleOnline(){
@@ -731,12 +751,19 @@ class App extends Component {
   }
 
   removePixel(index){
-    let pixels = [...this.state.pixels]
-    pixels.splice( index, 1 )
-    this.setState({pixels: pixels}, () => {
-      this.updateSounds()
-      this.setColorScheme(this.state.pixels)
-    })
+    if(this.isAddMode()){
+      // need to tell server to remove!
+      // userid is required for all msgs from clients
+      let data = JSON.stringify({removeOnlinePixel: index, userID: this.state.userID})
+      client.send(data)
+    } else {
+      let pixels = [...this.state.pixels]
+      pixels.splice( index, 1 )
+      this.setState({pixels: pixels}, () => {
+        this.updateSounds()
+        this.setColorScheme(this.state.pixels)
+      })
+    }
   }
 
   pixelsFromColors(colorDatas){
@@ -779,6 +806,12 @@ class App extends Component {
       let msg = JSON.stringify({userID: this.state.userID, changeColor: newColor})
       client.send(msg)
     }) 
+  }
+
+  addOnlinePixel(color){
+    this.massageAudioContext()
+    let msg = JSON.stringify({userID: this.state.userID, addOnlinePixel: color})
+    client.send(msg)
   }
 
   changeTempo(newTempo){
@@ -1367,7 +1400,7 @@ class App extends Component {
     if(this.state.online){
       // change your color online
 
-      colorPalette = <ColorPicker userColor={ this.state.userColor } colorNameToHex={ colorNameFunc } changeColor={ this.changeColor } />
+      colorPalette = <ColorPicker userColor={ this.state.userColor } colorNameToHex={ colorNameFunc } pixelClick={ this.isAddMode() ? this.addOnlinePixel : this.changeColor } />
     } else {
       // add extra colors offline
       let colors = this.rainbow().map( (color) => <Pixel color={ colorNameFunc(color) } onClick={ () => { this.addPixel(color) } } /> )
@@ -1408,6 +1441,8 @@ class App extends Component {
         transportButtons.push(<TransportControl thin={ this.state.moreMenu } onClick={ this.toggleGroupMode } active={ this.isGroupMode() } code="grpp" />)
 
         transportButtons.push(<TransportControl thin={ this.state.moreMenu } onClick={ this.toggleBeatMode } active={ this.isBeatMode() } code="beat" />)
+
+        transportButtons.push(<TransportControl thin={ this.state.moreMenu } onClick={ this.toggleAddMode } active={ this.isAddMode() } code="addi" />)
       } else {
         // only show rand button in offline
         transportButtons.push(<TransportControl thin={ this.state.moreMenu } onClick={ this.toggleRandomizePixels } active={ this.state.randomizePixels } code="rand" />)
@@ -1485,8 +1520,8 @@ class App extends Component {
         colorPaletteClasses += " big"
       }
 
-
       if(this.isBeatMode() && !this.isMaster()){
+        // users in beatmode see big button
         beatButton = (
           <button className="beat-button" onClick={ this.tapBeatButton } />
         )

@@ -25,6 +25,9 @@ var sequencerTrackLength = 16
 
 var groupMasterUserID = false
 
+var addModeEnabled = false
+var addModePixels = []
+
 
 // This code generates unique userid for every beepr
 function getUniqueID() {
@@ -53,12 +56,18 @@ function deleteClient(userID){
 }
 
 function updatePixels(){
-  let pixelData = Object.keys(clients).map( (userID) => {
-    if(clients[userID]){
-      return { color: clients[userID].pixelColor, userID: userID }
-    }
-  })
-
+  let pixelData
+  if(addModeEnabled){
+    pixelData = addModePixels.map((col) => { return {color: col} } )
+  } else {
+    pixelData = Object.keys(clients).map( (userID) => {
+      if(clients[userID]){
+        return { color: clients[userID].pixelColor, userID: userID }
+      }
+    })
+  
+  }
+  
   Object.keys(clients).forEach( (userID) => {
     // update each client on current colors
     console.log( 'updating colors for ', userID )
@@ -88,6 +97,9 @@ function stopGroupMode(){
   beatModeTempo = false
   beatModeSteps = false
 
+  addModeEnabled = false
+  addModePixels = []
+
   Object.keys(clients).forEach( (userID) => {
     let data = {userID: userID, groupMode: "stop", groupMasterID: false}
     sendDataToClient(userID, data)   
@@ -104,6 +116,15 @@ function startBeatMode(masterUserID, tempo, steps){
   groupMasterUserID = masterUserID
   Object.keys(clients).forEach( (userID) => {
     let data = {userID: userID, groupMode: "beat", groupMasterID: groupMasterUserID, beatColor: clients[userID].beatColor}
+    sendDataToClient(userID, data)
+  })
+}
+
+function startAddMode(){
+  addModeEnabled = true
+
+  Object.keys(clients).forEach( (userID) => {
+    let data = {userID: userID, groupMode: "add", beatColor: clients[userID].beatColor}
     sendDataToClient(userID, data)
   })
 }
@@ -154,6 +175,8 @@ wsServer.on('request', function(request) {
   } else if(beatModeEnabled){
     // tell the new client about beat mode
     sendDataToClient(userID, {groupMode: "beat", groupMasterID: groupMasterUserID, beatColor: clients[userID].beatColor })
+  } else if(addModeEnabled){
+    sendDataToClient(userID, {groupMode: "add", beatColor: clients[userID].beatColor })
   }
 
   // tell the new client who they is and what the pixels are
@@ -206,13 +229,21 @@ wsServer.on('request', function(request) {
             clients[data.userID].lives += 1
           }
         } else {
-
+          console.log( 'hey bitch', data )
           // actual state change
           if(data.changeColor){
             // if user asked to change their color, do it
             clients[data.userID].pixelColor = data.changeColor
           } else if(data.lightStep){
             beatModeCurrentStep = parseInt(data.lightStep)
+          } else if(data.addOnlinePixel && addModeEnabled) {
+            addModePixels.push( data.addOnlinePixel )
+
+          } else if(data.removeOnlinePixel && addModeEnabled){
+            console.log( 'hello!!', data )
+            addModePixels.splice(data.removeOnlinePixel, 1)
+
+
           } else if(data.beat && beatModeEnabled){
             // this is a user tapping their button and sending a 'beat' event
 
@@ -239,6 +270,11 @@ wsServer.on('request', function(request) {
 
               // set tempo to use for beat tap timers
               startBeatMode(data.userID, data.tempo, data.steps)
+            } else if(data.groupMode === "add"){
+              // silence all users other than sender
+              console.log( 'starting addmode  ' )
+
+              startAddMode()
             } else {
               // go back to normal
               console.log( 'stopping groupmode :: master ', data.userID )

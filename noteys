@@ -232,3 +232,23 @@ users now send beatcolor as data when they tap beat to ss
   master need to use beatchecks to determine mastersequencer border colors, instead of just t/f
 
 
+
+
+
+
+
+add mode
+  multiplayer
+  users click to add multiple pixels
+  pixels play for 3 sequencer runs or whatever, then are deleted
+  anyone can add
+  everyone gets play
+
+multiseq mode?
+  show a sequencer for every track.?
+
+
+
+
+
+
