@@ -10,8 +10,17 @@ function Pixel(props){
   } else {
     boxShadow = "0px 0px 4px " + props.color;
   }
+
+  let stylez = {backgroundColor: props.color, boxShadow: boxShadow }
+  if(props.fadePixel){
+
+    stylez.animationName = "fade-animation"
+    stylez.animationDuration = `${ props.fadeDuration }s`
+  
+  }
+  
   return(
-    <div onClick={ props.onClick } className={ pixelClasses } style={ { backgroundColor: props.color, boxShadow: boxShadow } } />
+    <div onClick={ props.onClick } className={ pixelClasses } style={ stylez } />
   )
 }
 

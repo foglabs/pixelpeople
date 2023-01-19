@@ -17,7 +17,7 @@ var beatModeEnabled = false
 var beatModeSeqStartTime = false
 var beatModeCurrentStep = false
 
-var beatModeTempo = false
+var tempo = false
 var beatModeSteps = false
 var beatChecks = new Array(sequencerTrackLength).fill(false)
 
@@ -58,7 +58,7 @@ function deleteClient(userID){
 function updatePixels(){
   let pixelData
   if(addModeEnabled){
-    pixelData = addModePixels.map((col) => { return {color: col} } )
+    pixelData = addModePixels.map((pix) => { return {color: pix.color} } )
   } else {
     pixelData = Object.keys(clients).map( (userID) => {
       if(clients[userID]){
@@ -94,7 +94,7 @@ function stopGroupMode(){
   beatModeEnabled = false
   beatModeSeqStartTime = false
   beatModeCurrentStep = false
-  beatModeTempo = false
+  tempo = false
   beatModeSteps = false
 
   addModeEnabled = false
@@ -110,7 +110,7 @@ function startBeatMode(masterUserID, tempo, steps){
   beatModeEnabled = true
   beatModeSeqStartTime = performance.now()
   beatModeCurrentStep = 0
-  beatModeTempo = tempo
+  tempo = tempo
   beatModeSteps = steps
 
   groupMasterUserID = masterUserID
@@ -120,11 +120,12 @@ function startBeatMode(masterUserID, tempo, steps){
   })
 }
 
-function startAddMode(){
+function startAddMode(newTempo){
   addModeEnabled = true
 
+  tempo = newTempo
   Object.keys(clients).forEach( (userID) => {
-    let data = {userID: userID, groupMode: "add", beatColor: clients[userID].beatColor}
+    let data = {userID: userID, groupMode: "add", beatColor: clients[userID].beatColor, tempo: tempo}
     sendDataToClient(userID, data)
   })
 }
@@ -229,7 +230,7 @@ wsServer.on('request', function(request) {
             clients[data.userID].lives += 1
           }
         } else {
-          console.log( 'hey bitch', data )
+
           // actual state change
           if(data.changeColor){
             // if user asked to change their color, do it
@@ -237,10 +238,9 @@ wsServer.on('request', function(request) {
           } else if(data.lightStep){
             beatModeCurrentStep = parseInt(data.lightStep)
           } else if(data.addOnlinePixel && addModeEnabled) {
-            addModePixels.push( data.addOnlinePixel )
+            addModePixels.push( { color: data.addOnlinePixel, createdAt: Date.now() } )
 
           } else if(data.removeOnlinePixel && addModeEnabled){
-            console.log( 'hello!!', data )
             addModePixels.splice(data.removeOnlinePixel, 1)
 
 
@@ -272,17 +272,25 @@ wsServer.on('request', function(request) {
               startBeatMode(data.userID, data.tempo, data.steps)
             } else if(data.groupMode === "add"){
               // silence all users other than sender
-              console.log( 'starting addmode  ' )
-
-              startAddMode()
+              console.log( 'starting addmode with tempo ', data.tempo )
+              startAddMode(data.tempo)
             } else {
               // go back to normal
               console.log( 'stopping groupmode :: master ', data.userID )
               stopGroupMode()
             }
           } else if(data.changeTempo){
-            // receive tempo from beatmaster change
-            beatModeTempo = data.changeTempo
+            // receive tempo from beatmaster change or addmode
+            tempo = data.changeTempo
+            console.log( `new tempo is ${data.changeTempo}`)
+            Object.keys(clients).forEach( (userID) => {
+              // let these hoes know
+              if(data.userID !== userID){
+                let send = {userID: userID, changeTempo: tempo}
+                sendDataToClient(userID, send)     
+              }
+              
+            })
           }
 
           // then update everybody with all the colors
@@ -307,7 +315,7 @@ wsServer.on('request', function(request) {
       // // every sequencer run
       // // someone is responsible for tapping each step
 
-      // if(performance.now() > ( beatModeSeqStartTime + (stepLength(beatModeTempo) * beatModeCurrentStep) ) ){
+      // if(performance.now() > ( beatModeSeqStartTime + (stepLength(tempo) * beatModeCurrentStep) ) ){
       //   console.log( `finished ${beatModeCurrentStep}` )
       //   beatModeCurrentStep += 1
 
@@ -322,9 +330,23 @@ wsServer.on('request', function(request) {
       //     sendDataToClient(groupMasterUserID, { currentStep: beatModeCurrentStep, beatChecks: beatChecks })
       //   }
       // }
+    } else if(addModeEnabled){
+      // remove pix if they're more than 5s old
+      let oglength = addModePixels.length
+      addModePixels = addModePixels.filter( (pix) => { return pix.createdAt + fadeDuration()*1000 > Date.now() })
+      if(addModePixels.length < oglength){
+        console.log( 'I removed!!', addModePixels.length-oglength )
+        updatePixels()
+      }
     }
 
   }, 1)
+
+  function fadeDuration(){
+    let val = Math.round( -(tempo / 8) + 32 )
+    return val > 0 ? val : 1
+  }
+
 
   function stepLength(tempo){
     // tempotosteptime

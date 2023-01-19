@@ -61,6 +61,23 @@
   width: 8vw;
 
   border-radius: 12px;
+  opacity: 1;
+}
+
+.user-pixels-container .pixel.fade {
+  opacity: 1;
+  animation-name: fade-animation;
+  animation-timing-function: ease-in;
+}
+
+@keyframes fade-animation {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.2;
+  }
+ 
 }
 
 .pixels-container.big .pixel {
@@ -273,7 +290,7 @@ div.knob-container div {
 }
 .soundshower-container {
   /*background-color: #ff0;*/
-  min-height: 2vw;
+  min-height: 6vh;
   background-color: #000;
   border: 1px solid #333;
 }
@@ -285,7 +302,7 @@ div.knob-container div {
   height: 2vw;
   margin-left: 1vw;
   margin-right: 1vw;
-  margin-top: 1vw;
+  margin-top: 4vw;
   margin-bottom: 1vw;
   overflow: hidden;
   background-color: transparent;
@@ -356,6 +373,10 @@ div.knob-container div {
 
 .transport-control:active {
   transform: translateY(1vh);
+}
+
+.transport-control.folder::before {
+  content: '📁';
 }
 
 .transport-control.white-border {

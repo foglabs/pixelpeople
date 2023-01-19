@@ -1,9 +1,9 @@
 function TransportControl(props){
 
   let buttonClasses = "transport-control "
-  if(props.thin){
-      buttonClasses += "thin "
-  }
+  // if(props.thin){
+  //     buttonClasses += "thin "
+  // }
   if(props.active){
     let borderColor = "white"
     if(props.borderColor){
@@ -13,9 +13,19 @@ function TransportControl(props){
   }
   buttonClasses += props.code
 
+  let subButtons
+  if(props.subButtons){
+    if(props.open){
+      subButtons = props.subButtons
+    }
+
+    buttonClasses += " folder"
+  }
+
   return(
     <div onClick={ props.onClick } className={ buttonClasses }>
       { props.code.toUpperCase() }
+      { subButtons }
     </div>
   )
 }

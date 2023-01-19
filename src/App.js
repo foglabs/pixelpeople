@@ -25,10 +25,15 @@ var seqWorker = new WorkerBuilder(SequencerWorker)
 const SOCKET_BACKEND = "ws://" + window.location.hostname + ":8000"
 var client = new W3CWebSocket(SOCKET_BACKEND)
 
-function killOnline(userID){
-  let data = JSON.stringify({disconnect: true, userID: userID})
-  client.send(data)
+
+function sendDataToServer(data) {
+  let str = JSON.stringify(data)
+  client.send(str)
 }
+function killOnline(userID){
+  sendDataToServer({disconnect: true, userID: userID})
+}
+
 
 // tell server we're disconnecting before close
 window.onbeforeunload = function() {
@@ -62,7 +67,7 @@ class App extends Component {
       randomizePixels: false,
       randomizePixelsInterval: 3600,
       noteLength: 1.64,
-      semitoneShift: -22,
+      semitoneShift: -24,
       schemeMode: SCHEMEMODE0,
       
       online: true,
@@ -80,7 +85,9 @@ class App extends Component {
       holdFactor: 0.5,
 
       darkMode: true,
-      coarse: true
+      coarse: true,
+      optionsMenu: false,
+
     }
 
     this.toggleMasterSequencerStep = this.toggleMasterSequencerStep.bind(this)
@@ -112,6 +119,8 @@ class App extends Component {
     this.tapBeatButton = this.tapBeatButton.bind(this)
 
     this.toggleMoreMenu = this.toggleMoreMenu.bind(this)
+    this.toggleModeMenu = this.toggleModeMenu.bind(this)
+    this.toggleOptionsMenu = this.toggleOptionsMenu.bind(this)
 
     this.startHoldDown = this.startHoldDown.bind(this)
     this.stopHoldDown = this.stopHoldDown.bind(this)
@@ -167,8 +176,7 @@ class App extends Component {
 
           } else if(action.data.lightStep){
             if(this.isBeatMode() && this.isMaster()){
-              let data = JSON.stringify({userID: this.state.userID, lightStep: action.data.lightStep});
-              client.send(data)
+              sendDataToServer({userID: this.state.userID, lightStep: action.data.lightStep})
             }
             this.setState({lightStep: action.data.lightStep})
           } else if(action.data.randomizePixels){
@@ -246,8 +254,7 @@ class App extends Component {
   setupSocketEvents(){
     client.onopen = () => {
       console.log('WebSocket Client Connectedzz');
-      let data = JSON.stringify({url: URL});
-      client.send(data);
+      sendDataToServer({url: URL})
     }
 
     client.onmessage = (message) => {
@@ -256,7 +263,7 @@ class App extends Component {
 
       if(data.ping){
         console.log( 'sending ping wiht usid', this.state.userID )
-        client.send(JSON.stringify({userID: this.state.userID, pong: true}))
+        sendDataToServer({userID: this.state.userID, pong: true})
       } else {
         // actual state change
         let localData = {}
@@ -297,14 +304,19 @@ class App extends Component {
             }
 
           } else if(data.groupMode === "add"){
-            // start beat mode
+            // start add mode
 
-            this.setState({groupMode: "add", beatColor: data.beatColor})
+            this.setState({groupMode: "add", beatColor: data.beatColor, tempo: data.tempo})
           } else {
 
             this.setState({groupMode: false, groupMasterID: false})
             this.changeMasterGain(this.state.masterGain)
           }
+        }
+
+        if(data.changeTempo){
+          // server said change our tempo
+          this.changeTempo(data.changeTempo)
         }
 
         if(data.beatChecks){
@@ -361,6 +373,14 @@ class App extends Component {
     this.setState( prevState => ({moreMenu: !prevState.moreMenu}) )
   }
 
+  toggleModeMenu(){
+    this.setState( prevState => ({modeMenu: !prevState.modeMenu}) )
+  }
+
+  toggleOptionsMenu(){
+    this.setState( prevState => ({optionsMenu: !prevState.optionsMenu}) )
+  }
+
   toggleDarkMode(){
     this.setState( prevState => ({darkMode: !prevState.darkMode}) )
   }
@@ -394,7 +414,7 @@ class App extends Component {
 
     let groupModeValue = this.isGroupMode() ? "stop" : "group"
     // always turn off beatmode since its either already off or we're using this method to turn it off
-    client.send( JSON.stringify({userID: this.state.userID, groupMode: groupModeValue}) )
+    sendDataToServer({userID: this.state.userID, groupMode: groupModeValue})
   }
 
   toggleBeatMode(){
@@ -404,7 +424,7 @@ class App extends Component {
     let beatModeValue = this.isBeatMode() ? "stop" : "beat"
 
     // send tempo and current seq steps so ss can keep track
-    client.send(JSON.stringify({userID: this.state.userID, groupMode: beatModeValue, tempo: this.state.tempo, steps: this.state.masterSequencerSteps}))
+    sendDataToServer({userID: this.state.userID, groupMode: beatModeValue, tempo: this.state.tempo, steps: this.state.masterSequencerSteps})
   }
 
   toggleAddMode(){
@@ -414,7 +434,7 @@ class App extends Component {
     let addModeValue = this.isAddMode() ? "stop" : "add"
 
     // send tempo and current seq steps so ss can keep track
-    client.send(JSON.stringify({userID: this.state.userID, groupMode: addModeValue}))
+    sendDataToServer({userID: this.state.userID, groupMode: addModeValue, tempo: this.state.tempo})
   }
 
   toggleOnline(){
@@ -754,8 +774,7 @@ class App extends Component {
     if(this.isAddMode()){
       // need to tell server to remove!
       // userid is required for all msgs from clients
-      let data = JSON.stringify({removeOnlinePixel: index, userID: this.state.userID})
-      client.send(data)
+      sendDataToServer({removeOnlinePixel: index, userID: this.state.userID})
     } else {
       let pixels = [...this.state.pixels]
       pixels.splice( index, 1 )
@@ -803,15 +822,13 @@ class App extends Component {
     this.massageAudioContext()
 
     this.setState({userColor: newColor}, () => {
-      let msg = JSON.stringify({userID: this.state.userID, changeColor: newColor})
-      client.send(msg)
+      sendDataToServer({userID: this.state.userID, changeColor: newColor})
     }) 
   }
 
   addOnlinePixel(color){
     this.massageAudioContext()
-    let msg = JSON.stringify({userID: this.state.userID, addOnlinePixel: color})
-    client.send(msg)
+    sendDataToServer({userID: this.state.userID, addOnlinePixel: color})
   }
 
   changeTempo(newTempo){
@@ -820,8 +837,10 @@ class App extends Component {
       this.setState({tempo: newTempo}, () => {
         seqWorker.postMessage({changeTempo: {value: stepTime} })
 
-        // let msg = JSON.stringify({changeTempo: newTempo })
-        // client.send(msg)
+        if(this.isAddMode()){
+          // inform server of tempo changes if addmode
+          sendDataToServer({userID: this.state.userID, changeTempo: newTempo})
+        }
       })  
     }
     
@@ -1013,7 +1032,7 @@ class App extends Component {
       for(var i=0; i<this.state.synths.length; i++){
         if( this.state.synths[i] && keepSynthIds.indexOf(this.state.synths[i].id) === -1 ){
           // if this synth is not in new ids, stop it so it dies when we lose its reference
-          console.log( 'hardstupsssed id!', this.state.synths[i].id, keepSynthIds.indexOf(this.state.synths[i].id) )
+          // console.log( 'hardstopped id!', this.state.synths[i].id, keepSynthIds.indexOf(this.state.synths[i].id) )
           this.state.synths[i].hardStop()
           deleteSynthIds.push(this.state.synths[i].id)
 
@@ -1209,6 +1228,15 @@ class App extends Component {
       }
     }
 
+    // fill in blank mssteps for steps that didnt divide evenly
+    let refillIndex = 0
+    for(var b=0; b<msColors.length; b++){
+      if(msColors[b] == "#000"){
+        msColors[b] = msColors[refillIndex]
+        refillIndex++
+      }
+    }
+
     this.setState({masterSequencerColors: msColors, schemeColors: schemeColors})
   }
 
@@ -1315,7 +1343,7 @@ class App extends Component {
  
   createPatternSound(parentSynthId, color, numberOfRepeats, index, gain){
 
-    console.log( 'fuc, bitch! im makin pattern sound with psi ', index )
+    // console.log( 'fuc! im makin pattern sound with psi ', index )
 
     let frequency = this.getFrequency(color) * (numberOfRepeats+1)
     let a,h,r
@@ -1365,8 +1393,13 @@ class App extends Component {
     if(this.state.online){
 
       // will get users beat color from clients[] in server
-      client.send(JSON.stringify({userID: this.state.userID, beat: true}))
+      sendDataToServer({userID: this.state.userID, beat: true})
     }
+  }
+
+  fadeDuration(tempo){
+    let val = Math.round( -(tempo / 8) + 32 )
+    return val > 0 ? val : 1
   }
 
   render(){
@@ -1392,7 +1425,7 @@ class App extends Component {
     if(this.state.pixels){
 
       let colorNameFunc = !this.state.darkMode ? this.colorNameToHex : this.colorNameToVeryDarkHex
-      pixels = this.state.pixels.map( (pixel, index) => { return <Pixel onClick={ () => { this.removePixel(index) } } color={ colorNameFunc(pixel.color) } border={ this.state.userID === pixel.userID } /> })
+      pixels = this.state.pixels.map( (pixel, index) => { return <Pixel onClick={ () => { this.removePixel(index) } } color={ colorNameFunc(pixel.color) } border={ this.state.userID === pixel.userID } fadePixel={ this.isAddMode() } fadeDuration={ this.fadeDuration(this.state.tempo) } /> })
     }
 
     let colorPalette
@@ -1432,21 +1465,7 @@ class App extends Component {
 
     let moreCode
     if(this.state.moreMenu){
-
-      transportButtons = [<TransportControl thin={ this.state.moreMenu } onClick={ this.incrementSchemeMode } code={ "schm" } active={ true } borderColor={ this.state.schemeMode === SCHEMEMODE0 ? "white" : "green" } />,<TransportControl thin={ this.state.moreMenu } onClick={ prevState => this.setState({darkMode: !this.state.darkMode}) } code={ "dark" } active={ this.state.darkMode } />]
-      moreCode = "less"
-
-      if(this.state.online){
-        // show group mode toggle only when we're online
-        transportButtons.push(<TransportControl thin={ this.state.moreMenu } onClick={ this.toggleGroupMode } active={ this.isGroupMode() } code="grpp" />)
-
-        transportButtons.push(<TransportControl thin={ this.state.moreMenu } onClick={ this.toggleBeatMode } active={ this.isBeatMode() } code="beat" />)
-
-        transportButtons.push(<TransportControl thin={ this.state.moreMenu } onClick={ this.toggleAddMode } active={ this.isAddMode() } code="addi" />)
-      } else {
-        // only show rand button in offline
-        transportButtons.push(<TransportControl thin={ this.state.moreMenu } onClick={ this.toggleRandomizePixels } active={ this.state.randomizePixels } code="rand" />)
-      }
+      // OPTIONS MENU
 
       let coarseCode
       if(this.state.coarse){
@@ -1454,7 +1473,25 @@ class App extends Component {
       } else {
         coarseCode = "fine"
       }
-      transportButtons.push(<TransportControl thin={ this.state.moreMenu } onClick={ this.toggleCoarse } active={ this.state.coarse } code={ coarseCode } />)
+
+      transportButtons = [
+
+        <TransportControl thin={ this.state.moreMenu } onClick={ this.toggleOptionsMenu } code={ "opts" } active={ this.state.optionsMenu }subButtons={[<TransportControl thin={ this.state.moreMenu } onClick={ this.incrementSchemeMode } code={ "schm" } active={ true } borderColor={ this.state.schemeMode === SCHEMEMODE0 ? "white" : "green" } />, <TransportControl thin={ this.state.moreMenu } onClick={ prevState => this.setState({darkMode: !this.state.darkMode}) } code={ "dark" } active={ this.state.darkMode } />,<TransportControl thin={ this.state.moreMenu } onClick={ this.toggleCoarse } active={ this.state.coarse } code={ coarseCode } />]} open={ this.state.optionsMenu } />,
+        ]
+      moreCode = "less"
+
+      if(this.state.online){
+        // show group mode toggle only when we're online
+        
+        transportButtons.push(
+          <TransportControl onClick={ this.toggleModeMenu } thin={ this.state.moreMenu } subButtons={ [<TransportControl thin={ this.state.moreMenu } onClick={ this.toggleGroupMode } active={ this.isGroupMode() } code="grpp" />, <TransportControl thin={ this.state.moreMenu } onClick={ this.toggleBeatMode } active={ this.isBeatMode() } code="beat" />, <TransportControl thin={ this.state.moreMenu } onClick={ this.toggleAddMode } active={ this.isAddMode() } code="addi" />] } code="mode" open={ this.state.modeMenu } />
+        )
+
+      } else {
+        // only show rand button in offline
+        transportButtons.push(<TransportControl thin={ this.state.moreMenu } onClick={ this.toggleRandomizePixels } active={ this.state.randomizePixels } code="rand" />)
+      }
+
     } else {
 
       transportButtons = [
