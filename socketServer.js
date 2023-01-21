@@ -106,11 +106,15 @@ function stopGroupMode(){
   })
 }
 
-function startBeatMode(masterUserID, tempo, steps){
+function startBeatMode(masterUserID, newTempo, steps){
   beatModeEnabled = true
   beatModeSeqStartTime = performance.now()
   beatModeCurrentStep = 0
-  tempo = tempo
+  if(newTempo){
+    tempo = newTempo
+  } else {
+    tempo = 64
+  }
   beatModeSteps = steps
 
   groupMasterUserID = masterUserID
@@ -122,7 +126,7 @@ function startBeatMode(masterUserID, tempo, steps){
 
 function startAddMode(newTempo){
   addModeEnabled = true
-
+  console.log( 'start bearmode with ', newTempo )
   tempo = newTempo
   Object.keys(clients).forEach( (userID) => {
     let data = {userID: userID, groupMode: "add", beatColor: clients[userID].beatColor, tempo: tempo}
@@ -133,7 +137,7 @@ function startAddMode(newTempo){
 function sendDataToClient(userID, data){
   if(clients[userID]){
     let msg = JSON.stringify(data)
-    console.log( 'sending msg ', msg )
+    // console.log( 'sending msg ', msg )
     clients[userID].send(msg)  
   }
   
@@ -177,7 +181,7 @@ wsServer.on('request', function(request) {
     // tell the new client about beat mode
     sendDataToClient(userID, {groupMode: "beat", groupMasterID: groupMasterUserID, beatColor: clients[userID].beatColor })
   } else if(addModeEnabled){
-    sendDataToClient(userID, {groupMode: "add", beatColor: clients[userID].beatColor })
+    sendDataToClient(userID, {groupMode: "add", beatColor: clients[userID].beatColor, tempo: tempo })
   }
 
   // tell the new client who they is and what the pixels are
@@ -188,7 +192,7 @@ wsServer.on('request', function(request) {
   connection.on('message', function(message) {
 
     if (message.type === 'utf8') {
-      console.log('Received Message: ' + message.utf8Data);
+      // console.log('Received Message: ' + message.utf8Data);
       let data = JSON.parse(message.utf8Data);
 
       // // get origin from client!

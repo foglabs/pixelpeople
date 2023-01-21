@@ -29,7 +29,9 @@ var client = new W3CWebSocket(SOCKET_BACKEND)
 function sendDataToServer(data) {
   let str = JSON.stringify(data)
   client.send(str)
+  console.log( 'lol!', data )
 }
+
 function killOnline(userID){
   sendDataToServer({disconnect: true, userID: userID})
 }
@@ -76,6 +78,7 @@ class App extends Component {
 
       // is the server in group mode
       groupMode: false,
+      lastTempoChange: Date.now(),
       // who is da masta
       groupMasterID: false,
       beatChecks: new Array(this.sequencerTrackLength).fill(false),
@@ -316,7 +319,7 @@ class App extends Component {
 
         if(data.changeTempo){
           // server said change our tempo
-          this.changeTempo(data.changeTempo)
+          this.changeTempo(data.changeTempo, true)
         }
 
         if(data.beatChecks){
@@ -831,15 +834,18 @@ class App extends Component {
     sendDataToServer({userID: this.state.userID, addOnlinePixel: color})
   }
 
-  changeTempo(newTempo){
+  changeTempo(newTempo, fromServer=false){
+    // fromserver to avoid feedback loops from tempo changes
     let stepTime = this.tempoToStepTime(newTempo)
     if(newTempo >= 0){
       this.setState({tempo: newTempo}, () => {
         seqWorker.postMessage({changeTempo: {value: stepTime} })
 
-        if(this.isAddMode()){
-          // inform server of tempo changes if addmode
+        if(this.isAddMode() && !fromServer ){
+          // inform server of tempo changes if addmode, but were not reacting to server
+
           sendDataToServer({userID: this.state.userID, changeTempo: newTempo})
+          this.setState({lastTempoChange: Date.now()})
         }
       })  
     }
@@ -1477,6 +1483,7 @@ class App extends Component {
       transportButtons = [
 
         <TransportControl thin={ this.state.moreMenu } onClick={ this.toggleOptionsMenu } code={ "opts" } active={ this.state.optionsMenu }subButtons={[<TransportControl thin={ this.state.moreMenu } onClick={ this.incrementSchemeMode } code={ "schm" } active={ true } borderColor={ this.state.schemeMode === SCHEMEMODE0 ? "white" : "green" } />, <TransportControl thin={ this.state.moreMenu } onClick={ prevState => this.setState({darkMode: !this.state.darkMode}) } code={ "dark" } active={ this.state.darkMode } />,<TransportControl thin={ this.state.moreMenu } onClick={ this.toggleCoarse } active={ this.state.coarse } code={ coarseCode } />]} open={ this.state.optionsMenu } />,
+          // reset button
         ]
       moreCode = "less"
 
