@@ -1482,7 +1482,11 @@ class App extends Component {
 
       transportButtons = [
 
-        <TransportControl thin={ this.state.moreMenu } onClick={ this.toggleOptionsMenu } code={ "opts" } active={ this.state.optionsMenu }subButtons={[<TransportControl thin={ this.state.moreMenu } onClick={ this.incrementSchemeMode } code={ "schm" } active={ true } borderColor={ this.state.schemeMode === SCHEMEMODE0 ? "white" : "green" } />, <TransportControl thin={ this.state.moreMenu } onClick={ prevState => this.setState({darkMode: !this.state.darkMode}) } code={ "dark" } active={ this.state.darkMode } />,<TransportControl thin={ this.state.moreMenu } onClick={ this.toggleCoarse } active={ this.state.coarse } code={ coarseCode } />]} open={ this.state.optionsMenu } />,
+        <TransportControl thin={ this.state.moreMenu } onClick={ this.toggleOptionsMenu } code={ "opts" } active={ this.state.optionsMenu } subButtons={[
+            <TransportControl isSubButton={true} thin={ this.state.moreMenu } onClick={ this.incrementSchemeMode } code={ "schm" } active={ true } borderColor={ this.state.schemeMode === SCHEMEMODE0 ? " white" : " green" } />,
+            <TransportControl isSubButton={true} thin={ this.state.moreMenu } onClick={ prevState => this.setState({darkMode: !this.state.darkMode}) } code={ "dark" } active={ this.state.darkMode } />,
+            <TransportControl isSubButton={true} thin={ this.state.moreMenu } onClick={ this.toggleCoarse } active={ this.state.coarse } code={ coarseCode } />
+          ]} open={ this.state.optionsMenu } />,
           // reset button
         ]
       moreCode = "less"
@@ -1491,7 +1495,11 @@ class App extends Component {
         // show group mode toggle only when we're online
         
         transportButtons.push(
-          <TransportControl onClick={ this.toggleModeMenu } thin={ this.state.moreMenu } subButtons={ [<TransportControl thin={ this.state.moreMenu } onClick={ this.toggleGroupMode } active={ this.isGroupMode() } code="grpp" />, <TransportControl thin={ this.state.moreMenu } onClick={ this.toggleBeatMode } active={ this.isBeatMode() } code="beat" />, <TransportControl thin={ this.state.moreMenu } onClick={ this.toggleAddMode } active={ this.isAddMode() } code="addi" />] } code="mode" open={ this.state.modeMenu } />
+          <TransportControl onClick={ this.toggleModeMenu } thin={ this.state.moreMenu } subButtons={[
+            <TransportControl isSubButton={true} thin={ this.state.moreMenu } onClick={ this.toggleGroupMode } active={ this.isGroupMode() } code="grpp" />,
+            <TransportControl isSubButton={true} thin={ this.state.moreMenu } onClick={ this.toggleBeatMode } active={ this.isBeatMode() } code="beat" />,
+            <TransportControl isSubButton={true} thin={ this.state.moreMenu } onClick={ this.toggleAddMode } active={ this.isAddMode() } code="addi" />
+          ]} code="mode" open={ this.state.modeMenu } />
         )
 
       } else {

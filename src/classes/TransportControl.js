@@ -1,17 +1,17 @@
 function TransportControl(props){
 
-  let buttonClasses = "transport-control "
+  let buttonClasses = "transport-control"
   // if(props.thin){
   //     buttonClasses += "thin "
   // }
   if(props.active){
-    let borderColor = "white"
+    let borderColor = " white"
     if(props.borderColor){
       borderColor = props.borderColor
     }
-    buttonClasses += borderColor + "-border "
+    buttonClasses += borderColor + "-border"
   }
-  buttonClasses += props.code
+  buttonClasses += " " + props.code
 
   let subButtons
   if(props.subButtons){
@@ -20,6 +20,10 @@ function TransportControl(props){
     }
 
     buttonClasses += " folder"
+  }
+
+  if(props.isSubButton){
+    buttonClasses += " sub-button"
   }
 
   return(
