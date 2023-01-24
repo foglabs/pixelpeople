@@ -21,8 +21,8 @@ import SequencerWorker from "./seqWorker.js"
 var seqWorker = new WorkerBuilder(SequencerWorker)
 
 // online
-// const SOCKET_BACKEND = "wss://" + window.location.hostname + "/online"
-const SOCKET_BACKEND = "ws://" + window.location.hostname + ":8000"
+const SOCKET_BACKEND = "wss://" + window.location.hostname + "/s"
+// const SOCKET_BACKEND = "ws://" + window.location.hostname + ":8000"
 var client = new W3CWebSocket(SOCKET_BACKEND)
 
 
