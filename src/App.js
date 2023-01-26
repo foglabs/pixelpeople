@@ -1,4 +1,3 @@
-import logo from "./logo.svg";
 import "./App.css";
 // core
 import React, { Component, useEffect } from "react"
@@ -29,7 +28,7 @@ var client = new W3CWebSocket(SOCKET_BACKEND)
 function sendDataToServer(data) {
   let str = JSON.stringify(data)
   client.send(str)
-  console.log( 'lol!', data )
+  // console.log( 'lol!', data )
 }
 
 function killOnline(userID){
@@ -157,11 +156,12 @@ class App extends Component {
       // start seq
       // var sequencerWorker = new Worker(sequencer)
       seqWorker.onmessage = (action) => {
+        console.log( 'i ever go a message!' )
         if(action) {
           // console.log("Message from sequencer", action.data);
           if(action.data.playSynth){
             // play synth now, since seq said so
-
+            
             // console.log( 'playing synth', action.data.playSynth.index )
 
             if(this.isBeatMode() && this.isMaster()){
@@ -184,6 +184,7 @@ class App extends Component {
             this.setState({lightStep: action.data.lightStep})
           } else if(action.data.randomizePixels){
             if(this.state.playing){
+
               // get rid of old pixels
               this.setState({pixels: []}, () => {
 

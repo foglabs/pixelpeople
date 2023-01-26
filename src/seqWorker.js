@@ -1,8 +1,6 @@
 // eslint-disable-next-line import/no-anonymous-default-export
-
-
-// import { Sequencer } from './classes/Sequencer.js'
-export default () => {
+// export default () => {
+const SequencerWorker = () => {
   class Timer {
     constructor(countdownTime=null){
 
@@ -246,3 +244,4 @@ export default () => {
 
 
 
+export default SequencerWorker
