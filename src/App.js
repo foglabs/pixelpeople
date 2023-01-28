@@ -18,6 +18,7 @@ import SequencerWorker from "./seqWorker.js"
 
 // handles timing
 var seqWorker = new WorkerBuilder(SequencerWorker)
+console.log( 'i do make this', seqWorker )
 
 // online
 const SOCKET_BACKEND = "wss://" + window.location.hostname + "/s"
