@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [[ $(/usr/sbin/lsof -ti :4000 && /usr/sbin/lsof -ti :8000) ]]; then
+if [[ $(/usr/sbin/lsof -ti :3000 && /usr/sbin/lsof -ti :8000) ]]; then
     echo "Server already running... Cool!"
 else
     echo "Starting reg Server"
