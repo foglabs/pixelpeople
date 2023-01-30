@@ -106,6 +106,20 @@ function stopGroupMode(){
   })
 }
 
+function changeTempo(changerUserID, newTempo){
+  tempo = newTempo
+  console.log( `new tempo is ${tempo}`)
+  Object.keys(clients).forEach( (userID) => {
+    // let these hoes know
+    if(changerUserID.userID !== userID){
+      // but dont send back to user that initiated change!
+      let send = {userID: userID, changeTempo: tempo}
+      sendDataToClient(userID, send)     
+    }
+    
+  })
+}
+
 function startBeatMode(masterUserID, newTempo, steps){
   beatModeEnabled = true
   beatModeSeqStartTime = performance.now()
@@ -285,16 +299,11 @@ wsServer.on('request', function(request) {
             }
           } else if(data.changeTempo){
             // receive tempo from beatmaster change or addmode
-            tempo = data.changeTempo
-            console.log( `new tempo is ${data.changeTempo}`)
-            Object.keys(clients).forEach( (userID) => {
-              // let these hoes know
-              if(data.userID !== userID){
-                let send = {userID: userID, changeTempo: tempo}
-                sendDataToClient(userID, send)     
-              }
-              
-            })
+            changeTempo(data.userID, data.changeTempo)
+          } else if(data.reset){
+            stopGroupMode()
+            changeTempo(64, false)
+
           }
 
           // then update everybody with all the colors

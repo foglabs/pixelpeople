@@ -22,7 +22,8 @@ function MasterSequencer(props){
       beatBorder = "12px solid " + props.beatColors[stepIndex]
     }
     // value={ props.steps[stepIndex] ? "On" : "Off"}
-    return (<input style={{ border: beatBorder, backgroundColor: bgColor }} className={ seqClasses } onClick={ () => props.toggleMasterSequencerStep(stepIndex) } type="button" />) })
+    return (<input key={ stepIndex } style={{ border: beatBorder, backgroundColor: bgColor }} className={ seqClasses } onClick={ () => props.toggleMasterSequencerStep(stepIndex) } type="button" />)
+  })
 
   return(
     <div className="sequencer-container">

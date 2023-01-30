@@ -19,7 +19,6 @@ import SequencerWorker from "./seqWorker.js"
 
 // handles timing
 var seqWorker = new WorkerBuilder(SequencerWorker)
-console.log( 'i do make this', seqWorker )
 
 // online
 const SOCKET_BACKEND = "wss://" + window.location.hostname + "/s"
@@ -93,6 +92,7 @@ class App extends Component {
 
     }
 
+    this.reset = this.reset.bind(this)
     this.toggleMasterSequencerStep = this.toggleMasterSequencerStep.bind(this)
     this.addPixel = this.addPixel.bind(this)
     this.removePixel = this.removePixel.bind(this)
@@ -157,7 +157,6 @@ class App extends Component {
       // start seq
       // var sequencerWorker = new Worker(sequencer)
       seqWorker.onmessage = (action) => {
-        console.log( 'i ever go a message!' )
         if(action) {
           // console.log("Message from sequencer", action.data);
           if(action.data.playSynth){
@@ -254,8 +253,6 @@ class App extends Component {
     this.setState({holdTimer: false, holdDown: false, holdFactor: 1})
   }
 
-
-
   setupSocketEvents(){
     client.onopen = () => {
       console.log('WebSocket Client Connectedzz');
@@ -351,6 +348,30 @@ class App extends Component {
 
   isAddMode(){
     return this.state.groupMode == "add"
+  }
+
+  reset(){
+    let localData = {}
+    if(this.state.online){
+      sendDataToServer({userID: this.state.userID, reset: true})
+    } else {
+      // if offline, we wont get these from server
+      localData.tempo = 64
+      localData.pixels = []
+      localData.schemeColors = []
+    }
+
+    localData.masterGain = 0.36
+    localData.masterSequencerSteps = new Array(this.sequencerTrackLength).fill(true)
+    localData.masterSequencerColors = new Array(this.sequencerTrackLength).fill("#000")
+    localData.noteLength = 1.64
+    localData.semitoneShift = -24
+    localData.schemeMode = SCHEMEMODE0
+    
+    localData.numPix = 0
+    localData.randomizePixels = false
+    localData.randomizePixelsInterval = 3600
+    this.setState(localData)
   }
 
   restartOnline(){
@@ -1374,13 +1395,13 @@ class App extends Component {
 
   playSounds(){
     this.massageAudioContext()
-    console.log( 'play the sounds' )
+    // console.log( 'play the sounds' )
     seqWorker.postMessage({play: true})
     this.setState({playing: true})
   }
 
   stopSounds(){
-    console.log( 'stop the sounds' )
+    // console.log( 'stop the sounds' )
     // actually kills oscs..
     // this.state.synths.map ( (synth) => { synth.hardStop() } )
 
@@ -1485,11 +1506,11 @@ class App extends Component {
       transportButtons = [
 
         <TransportControl thin={ this.state.moreMenu } onClick={ this.toggleOptionsMenu } code={ "opts" } active={ this.state.optionsMenu } subButtons={[
-            <TransportControl isSubButton={true} thin={ this.state.moreMenu } onClick={ this.incrementSchemeMode } code={ "schm" } active={ true } borderColor={ this.state.schemeMode === SCHEMEMODE0 ? " white" : " green" } />,
-            <TransportControl isSubButton={true} thin={ this.state.moreMenu } onClick={ prevState => this.setState({darkMode: !this.state.darkMode}) } code={ "dark" } active={ this.state.darkMode } />,
-            <TransportControl isSubButton={true} thin={ this.state.moreMenu } onClick={ this.toggleCoarse } active={ this.state.coarse } code={ coarseCode } />
+            <TransportControl isSubButton={true} onClick={ this.incrementSchemeMode } code={ "schm" } active={ true } borderColor={ this.state.schemeMode === SCHEMEMODE0 ? " white" : " green" } />,
+            <TransportControl isSubButton={true} onClick={ prevState => this.setState({darkMode: !this.state.darkMode}) } code={ "dark" } active={ this.state.darkMode } />,
+            <TransportControl isSubButton={true} onClick={ this.toggleCoarse } active={ this.state.coarse } code={ coarseCode } />
           ]} open={ this.state.optionsMenu } />,
-          // reset button
+          <TransportControl onClick={ this.reset } code="rset" />
         ]
       moreCode = "less"
 
