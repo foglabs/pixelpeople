@@ -10,6 +10,7 @@ import ColorPicker from "./components/ColorPicker.js"
 import Synth from "./classes/Synth.js"
 import MasterSequencer from "./classes/MasterSequencer.js"
 import ColorScheme from "./classes/ColorScheme.js"
+import BigDisplay from "./components/BigDisplay.js"
 import SimpleControl from "./classes/SimpleControl.js"
 import TransportControl from "./classes/TransportControl.js"
 
@@ -35,7 +36,6 @@ function sendDataToServer(data) {
 function killOnline(userID){
   sendDataToServer({disconnect: true, userID: userID})
 }
-
 
 // tell server we're disconnecting before close
 window.onbeforeunload = function() {
@@ -1527,11 +1527,25 @@ class App extends Component {
       </span>
     )
 
-    let userControls, masterSequencer, soundShowsContainer, pixelsContainer
+    let userControls, masterSequencer, soundShowsContainer, pixelsContainer, display
+
+
+      display = (
+        <div className="user-controls-display">
+          <BigDisplay value={ this.state.masterGain } />
+          <BigDisplay value={ this.state.tempo } />
+          <BigDisplay value={ this.state.noteLength } />
+          <BigDisplay value={ this.state.semitoneShift } />
+        </div>
+      )
+
+
     if( !this.state.online || !( this.isGroupMode() || this.isBeatMode() ) || this.isMaster() ){
+
       userControls = (
         <div className="user-controls-container">
 
+          { display }
           <span id="simple">
             <SimpleControl changeFunction={ this.changeMasterGain } startHoldDown={ this.startHoldDown } stopHoldDown={ this.stopHoldDown } classes={ simpleControlClasses } changeFunction={ this.changeMasterGain } fieldName="masterGain" increment={ this.state.coarse ? 0.08 : 0.02 } label="VOLUME" value={ this.state.masterGain } /> 
      
@@ -1586,21 +1600,21 @@ class App extends Component {
     return (
       <div style={ {backgroundColor: beatColor} } className={ containerClasses } onTouchEnd={ this.stopHoldDown } onMouseUp={ this.stopHoldDown } >
 
+        { soundShowsContainer }
+
+        { masterSequencer }
+
+        { pixelsContainer }
+
         <div className={ colorPaletteClasses } >
           { colorPalette }
         </div>
 
         { userControls }
         
-        { transportButtonsContainer }
-
         { beatButton }
 
-        { soundShowsContainer }
-
-        { masterSequencer }
-
-        { pixelsContainer }
+        { transportButtonsContainer }
 
       </div>
     )  
