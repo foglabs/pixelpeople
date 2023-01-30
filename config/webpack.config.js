@@ -14,7 +14,7 @@ module.exports = {
     app: './src/index.js',
   },
   optimization: {
-      minimize: false,
+      minimize: true,
       minimizer: [
           new TerserPlugin(),
       ],
