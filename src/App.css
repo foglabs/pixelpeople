@@ -2,6 +2,7 @@
   background-color: #fff;
   width: 100vw;
   height: 100vh;
+  overflow-x: hidden;
 
   -webkit-user-select: none; /* Safari */
   -ms-user-select: none; /* IE 10 and IE 11 */
@@ -19,7 +20,7 @@
 
 .user-pixels-container {
   width: 100vw;
-  min-height: 10vw;
+  min-height: 8vh;
   margin-bottom: 2vh;
 }
 
@@ -691,8 +692,9 @@ div.knob-container div {
   }
 
   .user-pixels-container {
+    height: 16vh;
+
     min-height: 6vw;
-    height: 20vh;
     overflow: hidden;
   }
 
@@ -767,6 +769,14 @@ div.knob-container div {
     /*position: absolute;*/
     /*padding-bottom: 20vh;*/
     display: block;
+  }
+
+  div.big-display {
+    padding-top: 0.4em;
+    outline:  8px solid #090909;
+    outline-offset: -8px;
+    font-size: 1.2em;
+    line-height: 2.4em;  
   }
 }
 

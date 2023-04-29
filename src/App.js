@@ -350,6 +350,10 @@ class App extends Component {
     return this.state.groupMode == "add"
   }
 
+  isShowtimeMode(){
+    return this.state.groupMode == "showtime"
+  }
+
   reset(){
     let localData = {}
     if(this.state.online){
