@@ -21,8 +21,8 @@ import SequencerWorker from "./seqWorker.js"
 var seqWorker = new WorkerBuilder(SequencerWorker)
 
 // online
-const SOCKET_BACKEND = "wss://" + window.location.hostname + "/s"
-// const SOCKET_BACKEND = "ws://" + window.location.hostname + ":8000"
+// const SOCKET_BACKEND = "wss://" + window.location.hostname + "/s"
+const SOCKET_BACKEND = "ws://" + window.location.hostname + ":8000"
 var client = new W3CWebSocket(SOCKET_BACKEND)
 
 
@@ -115,6 +115,7 @@ class App extends Component {
     this.toggleGroupMode = this.toggleGroupMode.bind(this)
     this.toggleBeatMode = this.toggleBeatMode.bind(this)
     this.toggleAddMode = this.toggleAddMode.bind(this)
+    this.toggleShowMode = this.toggleShowMode.bind(this)
     this.toggleRandomizePixels = this.toggleRandomizePixels.bind(this)
     this.toggleCoarse = this.toggleCoarse.bind(this)
     this.incrementSchemeMode = this.incrementSchemeMode.bind(this)
@@ -309,6 +310,10 @@ class App extends Component {
             // start add mode
 
             this.setState({groupMode: "add", beatColor: data.beatColor, tempo: data.tempo})
+          } else if(data.groupMode === "show"){
+            // start show groupadd mode
+
+            this.setState({groupMode: "show", groupMasterID: data.groupMasterID, tempo: data.tempo})
           } else {
 
             this.setState({groupMode: false, groupMasterID: false})
@@ -335,7 +340,7 @@ class App extends Component {
   }
 
   isMaster(){
-    return ( ( this.isGroupMode() || this.isBeatMode() ) && this.state.groupMasterID == this.state.userID)
+    return ( ( this.isGroupMode() || this.isShowMode() || this.isBeatMode() ) && this.state.groupMasterID == this.state.userID)
   }
   
   isGroupMode(){
@@ -350,8 +355,8 @@ class App extends Component {
     return this.state.groupMode == "add"
   }
 
-  isShowtimeMode(){
-    return this.state.groupMode == "showtime"
+  isShowMode(){
+    return this.state.groupMode == "show"
   }
 
   reset(){
@@ -467,6 +472,16 @@ class App extends Component {
     sendDataToServer({userID: this.state.userID, groupMode: addModeValue, tempo: this.state.tempo})
   }
 
+  toggleShowMode(){
+    // send server start/stop group mode
+    // when starting, server will mute everyone other than the user that sent this
+
+    let showModeValue = this.isShowMode() ? "stop" : "show"
+
+    // send tempo and current seq steps so ss can keep track
+    sendDataToServer({userID: this.state.userID, groupMode: showModeValue, tempo: this.state.tempo})
+  }
+
   toggleOnline(){
     this.setState(prevState => ({online: !prevState.online}), () => {
       if(!this.state.online){
@@ -524,7 +539,7 @@ class App extends Component {
 
   getFrequency(colorName){
     // select which set of frequencies
-    if(this.isGroupMode()){
+    if(this.isGroupMode() || this.isShowMode()){
       return this.colorNameToFriendlyFreq(colorName)
     } else {
       return this.colorNameToFreq(colorName)
@@ -801,7 +816,7 @@ class App extends Component {
   }
 
   removePixel(index){
-    if(this.isAddMode()){
+    if(this.isAddMode() || (this.isMaster() && this.isShowMode()) ){
       // need to tell server to remove!
       // userid is required for all msgs from clients
       sendDataToServer({removeOnlinePixel: index, userID: this.state.userID})
@@ -1458,7 +1473,7 @@ class App extends Component {
     if(this.state.pixels){
 
       let colorNameFunc = !this.state.darkMode ? this.colorNameToHex : this.colorNameToVeryDarkHex
-      pixels = this.state.pixels.map( (pixel, index) => { return <Pixel onClick={ () => { this.removePixel(index) } } color={ colorNameFunc(pixel.color) } border={ this.state.userID === pixel.userID } fadePixel={ this.isAddMode() } fadeDuration={ this.fadeDuration(this.state.tempo) } /> })
+      pixels = this.state.pixels.map( (pixel, index) => { return <Pixel onClick={ () => { this.removePixel(index) } } color={ colorNameFunc(pixel.color) } border={ this.state.userID === pixel.userID } fadePixel={ this.isAddMode() || (this.isShowMode() && !pixel.userID) } fadeDuration={ this.fadeDuration(this.state.tempo) } /> })
     }
 
     let colorPalette
@@ -1466,7 +1481,8 @@ class App extends Component {
     if(this.state.online){
       // change your color online
 
-      colorPalette = <ColorPicker userColor={ this.state.userColor } colorNameToHex={ colorNameFunc } pixelClick={ this.isAddMode() ? this.addOnlinePixel : this.changeColor } />
+      // show: for master, adder, for user, charnger
+      colorPalette = <ColorPicker userColor={ this.state.userColor } colorNameToHex={ colorNameFunc } pixelClick={ ( this.isAddMode() || (this.isShowMode() && this.isMaster()) ) ? this.addOnlinePixel : this.changeColor } />
     } else {
       // add extra colors offline
       let colors = this.rainbow().map( (color) => <Pixel color={ colorNameFunc(color) } onClick={ () => { this.addPixel(color) } } /> )
@@ -1494,63 +1510,67 @@ class App extends Component {
       simpleControlClasses += " wide"
     }
 
+    let transportButtonsContainer
     let transportButtons
+    if(!this.isShowMode() || this.isMaster() ){
 
-    let moreCode
-    if(this.state.moreMenu){
-      // OPTIONS MENU
+      let moreCode
+      if(this.state.moreMenu){
+        // OPTIONS MENU
 
-      let coarseCode
-      if(this.state.coarse){
-        coarseCode = "crse"
+        let coarseCode
+        if(this.state.coarse){
+          coarseCode = "crse"
+        } else {
+          coarseCode = "fine"
+        }
+
+        transportButtons = [
+
+          <TransportControl thin={ this.state.moreMenu } onClick={ this.toggleOptionsMenu } code={ "opts" } active={ this.state.optionsMenu } subButtons={[
+              <TransportControl isSubButton={true} onClick={ this.incrementSchemeMode } code={ "schm" } active={ true } borderColor={ this.state.schemeMode === SCHEMEMODE0 ? " white" : " green" } />,
+              <TransportControl isSubButton={true} onClick={ prevState => this.setState({darkMode: !this.state.darkMode}) } code={ "dark" } active={ this.state.darkMode } />,
+              <TransportControl isSubButton={true} onClick={ this.toggleCoarse } active={ this.state.coarse } code={ coarseCode } />
+            ]} open={ this.state.optionsMenu } />,
+            <TransportControl onClick={ this.reset } code="rset" />
+          ]
+        moreCode = "less"
+
+        if(this.state.online){
+          // show group mode toggle only when we're online
+          
+          transportButtons.push(
+            <TransportControl onClick={ this.toggleModeMenu } thin={ this.state.moreMenu } subButtons={[
+              <TransportControl isSubButton={true} thin={ this.state.moreMenu } onClick={ this.toggleGroupMode } active={ this.isGroupMode() } code="grpp" />,
+              <TransportControl isSubButton={true} thin={ this.state.moreMenu } onClick={ this.toggleBeatMode } active={ this.isBeatMode() } code="beat" />,
+              <TransportControl isSubButton={true} thin={ this.state.moreMenu } onClick={ this.toggleAddMode } active={ this.isAddMode() } code="addi" />,
+              <TransportControl isSubButton={true} thin={ this.state.moreMenu } onClick={ this.toggleShowMode } active={ this.isShowMode() } code="show" />
+            ]} code="mode" open={ this.state.modeMenu } />
+          )
+
+        } else {
+          // only show rand button in offline
+          transportButtons.push(<TransportControl thin={ this.state.moreMenu } onClick={ this.toggleRandomizePixels } active={ this.state.randomizePixels } code="rand" />)
+        }
+
       } else {
-        coarseCode = "fine"
-      }
 
-      transportButtons = [
-
-        <TransportControl thin={ this.state.moreMenu } onClick={ this.toggleOptionsMenu } code={ "opts" } active={ this.state.optionsMenu } subButtons={[
-            <TransportControl isSubButton={true} onClick={ this.incrementSchemeMode } code={ "schm" } active={ true } borderColor={ this.state.schemeMode === SCHEMEMODE0 ? " white" : " green" } />,
-            <TransportControl isSubButton={true} onClick={ prevState => this.setState({darkMode: !this.state.darkMode}) } code={ "dark" } active={ this.state.darkMode } />,
-            <TransportControl isSubButton={true} onClick={ this.toggleCoarse } active={ this.state.coarse } code={ coarseCode } />
-          ]} open={ this.state.optionsMenu } />,
-          <TransportControl onClick={ this.reset } code="rset" />
+        transportButtons = [
+          <TransportControl thin={ this.state.moreMenu } onClick={ this.playSounds } active={ this.state.playing } code={ "play" } />,
+          <TransportControl thin={ this.state.moreMenu } onClick={ this.stopSounds } active={ !this.state.playing } code={ "stop" } />,
+          <TransportControl thin={ this.state.moreMenu } onClick={ this.toggleOnline }  active={ this.state.online } code={ "fnet" } />
         ]
-      moreCode = "less"
-
-      if(this.state.online){
-        // show group mode toggle only when we're online
-        
-        transportButtons.push(
-          <TransportControl onClick={ this.toggleModeMenu } thin={ this.state.moreMenu } subButtons={[
-            <TransportControl isSubButton={true} thin={ this.state.moreMenu } onClick={ this.toggleGroupMode } active={ this.isGroupMode() } code="grpp" />,
-            <TransportControl isSubButton={true} thin={ this.state.moreMenu } onClick={ this.toggleBeatMode } active={ this.isBeatMode() } code="beat" />,
-            <TransportControl isSubButton={true} thin={ this.state.moreMenu } onClick={ this.toggleAddMode } active={ this.isAddMode() } code="addi" />
-          ]} code="mode" open={ this.state.modeMenu } />
-        )
-
-      } else {
-        // only show rand button in offline
-        transportButtons.push(<TransportControl thin={ this.state.moreMenu } onClick={ this.toggleRandomizePixels } active={ this.state.randomizePixels } code="rand" />)
+        moreCode = "more"
       }
+      
+      transportButtons.push(<TransportControl thin={ this.state.moreMenu } onClick={ this.toggleMoreMenu } active={ this.state.moreMenu } code={ moreCode } />)
 
-    } else {
-
-      transportButtons = [
-        <TransportControl thin={ this.state.moreMenu } onClick={ this.playSounds } active={ this.state.playing } code={ "play" } />,
-        <TransportControl thin={ this.state.moreMenu } onClick={ this.stopSounds } active={ !this.state.playing } code={ "stop" } />,
-        <TransportControl thin={ this.state.moreMenu } onClick={ this.toggleOnline }  active={ this.state.online } code={ "fnet" } />
-      ]
-      moreCode = "more"
+      transportButtonsContainer = (
+        <span id="transport">
+          { transportButtons }
+        </span>
+      )
     }
-    
-    transportButtons.push(<TransportControl thin={ this.state.moreMenu } onClick={ this.toggleMoreMenu } active={ this.state.moreMenu } code={ moreCode } />)
-
-    let transportButtonsContainer = (
-      <span id="transport">
-        { transportButtons }
-      </span>
-    )
 
     let userControls, masterSequencer, soundShowsContainer, pixelsContainer, display
 
@@ -1565,7 +1585,7 @@ class App extends Component {
       )
 
 
-    if( !this.state.online || !( this.isGroupMode() || this.isBeatMode() ) || this.isMaster() ){
+    if( !this.state.online || !( this.isGroupMode() || this.isShowMode() || this.isBeatMode() ) || this.isMaster() ){
 
       userControls = (
         <div className="user-controls-container">
@@ -1604,13 +1624,26 @@ class App extends Component {
       )
     }
 
+    if(this.isShowMode()){
+      // second chance to show during show
+      pixelsContainer = (
+        <div className="user-pixels-container graph">
+          { pixels }
+        </div>
+      )
+    }
+
     let colorPaletteClasses = "pixels-container"
     let beatButton, beatColor
     if(this.state.online){
 
-      if(this.isGroupMode() && !this.isMaster()){
-        // if grpp and you are user, show big color selector
-        colorPaletteClasses += " big"
+      if(!this.isMaster()){
+        if(this.isGroupMode()){
+          // if grpp and you are user, show big color selector
+          colorPaletteClasses += " big"
+        } else if(this.isShowMode()){
+          colorPaletteClasses += " show"
+        }
       }
 
       if(this.isBeatMode() && !this.isMaster()){

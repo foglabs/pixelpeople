@@ -28,6 +28,9 @@ var groupMasterUserID = false
 var addModeEnabled = false
 var addModePixels = []
 
+var showModeEnabled = false
+var addModePixels = []
+
 
 // This code generates unique userid for every beepr
 function getUniqueID() {
@@ -59,6 +62,18 @@ function updatePixels(){
   let pixelData
   if(addModeEnabled){
     pixelData = addModePixels.map((pix) => { return {color: pix.color} } )
+  } else if(showModeEnabled){
+    //  you migh tsee the show - user pixels plus master add pixels
+    pixelData = addModePixels.map((pix) => { return {color: pix.color} } )
+
+    var userpix = Object.keys(clients).map( (userID) => {
+      if(clients[userID]){
+        return { color: clients[userID].pixelColor, userID: userID }
+      }
+    })
+
+    pixelData = pixelData.concat(userpix)
+
   } else {
     pixelData = Object.keys(clients).map( (userID) => {
       if(clients[userID]){
@@ -99,6 +114,8 @@ function stopGroupMode(){
 
   addModeEnabled = false
   addModePixels = []
+
+  showModeEnabled = false
 
   Object.keys(clients).forEach( (userID) => {
     let data = {userID: userID, groupMode: "stop", groupMasterID: false}
@@ -148,13 +165,22 @@ function startAddMode(newTempo){
   })
 }
 
+function startShowMode(masterUserID, newTempo){
+  showModeEnabled = true
+  groupMasterUserID = masterUserID
+  tempo = newTempo
+  Object.keys(clients).forEach( (userID) => {
+    let data = {userID: userID, groupMode: "show", groupMasterID: groupMasterUserID, tempo: tempo}
+    sendDataToClient(userID, data)
+  })
+}
+
 function sendDataToClient(userID, data){
   if(clients[userID]){
     let msg = JSON.stringify(data)
     // console.log( 'sending msg ', msg )
     clients[userID].send(msg)  
   }
-  
 }
 
 function userColors(){
@@ -196,6 +222,8 @@ wsServer.on('request', function(request) {
     sendDataToClient(userID, {groupMode: "beat", groupMasterID: groupMasterUserID, beatColor: clients[userID].beatColor })
   } else if(addModeEnabled){
     sendDataToClient(userID, {groupMode: "add", beatColor: clients[userID].beatColor, tempo: tempo })
+  } else if(showModeEnabled){
+    sendDataToClient(userID, {groupMode: "show"})
   }
 
   // tell the new client who they is and what the pixels are
@@ -255,10 +283,10 @@ wsServer.on('request', function(request) {
             clients[data.userID].pixelColor = data.changeColor
           } else if(data.lightStep){
             beatModeCurrentStep = parseInt(data.lightStep)
-          } else if(data.addOnlinePixel && addModeEnabled) {
+          } else if(data.addOnlinePixel && (addModeEnabled || showModeEnabled)) {
             addModePixels.push( { color: data.addOnlinePixel, createdAt: Date.now() } )
 
-          } else if(data.removeOnlinePixel && addModeEnabled){
+          } else if(data.removeOnlinePixel && (addModeEnabled || showModeEnabled)){
             addModePixels.splice(data.removeOnlinePixel, 1)
 
 
@@ -292,6 +320,10 @@ wsServer.on('request', function(request) {
               // silence all users other than sender
               console.log( 'starting addmode with tempo ', data.tempo )
               startAddMode(data.tempo)
+            } else if(data.groupMode === "show"){
+              // silence all users other than sender
+              console.log( 'starting show! ' )
+              startShowMode(data.userID, data.tempo)          
             } else {
               // go back to normal
               console.log( 'stopping groupmode :: master ', data.userID )
@@ -343,7 +375,7 @@ wsServer.on('request', function(request) {
       //     sendDataToClient(groupMasterUserID, { currentStep: beatModeCurrentStep, beatChecks: beatChecks })
       //   }
       // }
-    } else if(addModeEnabled){
+    } else if(addModeEnabled || showModeEnabled){
       // remove pix if they're more than 5s old
       let oglength = addModePixels.length
       addModePixels = addModePixels.filter( (pix) => { return pix.createdAt + fadeDuration()*1000 > Date.now() })

@@ -669,6 +669,16 @@ div.knob-container div {
     height: 14.6vh;
   }
 
+  .pixels-container.show {
+    position: absolute;
+    bottom: 10vh;
+  }
+
+  .pixels-container.show .color-picker .pixel {
+    width: 25vw;
+    height: 25vw;
+  }
+
   .live-container {
     position: fixed;
     bottom: 0;
