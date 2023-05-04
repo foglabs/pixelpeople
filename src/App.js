@@ -21,8 +21,8 @@ import SequencerWorker from "./seqWorker.js"
 var seqWorker = new WorkerBuilder(SequencerWorker)
 
 // online
-// const SOCKET_BACKEND = "wss://" + window.location.hostname + "/s"
-const SOCKET_BACKEND = "ws://" + window.location.hostname + ":8000"
+const SOCKET_BACKEND = "wss://" + window.location.hostname + "/s"
+// const SOCKET_BACKEND = "ws://" + window.location.hostname + ":8000"
 var client = new W3CWebSocket(SOCKET_BACKEND)
 
 
@@ -315,6 +315,11 @@ class App extends Component {
 
             this.setState({groupMode: "show", groupMasterID: data.groupMasterID, tempo: data.tempo})
           } else {
+
+            // turn everyones damn volume down
+            if(data.groupMasterID !== this.state.userID){
+              this.changeMasterGain(0)
+            }
 
             this.setState({groupMode: false, groupMasterID: false})
             this.changeMasterGain(this.state.masterGain)
@@ -1476,13 +1481,33 @@ class App extends Component {
       pixels = this.state.pixels.map( (pixel, index) => { return <Pixel onClick={ () => { this.removePixel(index) } } color={ colorNameFunc(pixel.color) } border={ this.state.userID === pixel.userID } fadePixel={ this.isAddMode() || (this.isShowMode() && !pixel.userID) } fadeDuration={ this.fadeDuration(this.state.tempo) } /> })
     }
 
-    let colorPalette
+    let colorPalette, colorPaletteAdd
     let colorNameFunc = !this.state.darkMode ? this.colorNameToHex : this.colorNameToVeryDarkHex
     if(this.state.online){
       // change your color online
 
-      // show: for master, adder, for user, charnger
-      colorPalette = <ColorPicker userColor={ this.state.userColor } colorNameToHex={ colorNameFunc } pixelClick={ ( this.isAddMode() || (this.isShowMode() && this.isMaster()) ) ? this.addOnlinePixel : this.changeColor } />
+      // show: for master, adder and changer, for user, just charnger
+      
+
+
+
+      if(this.isAddMode()){
+        // just add
+        colorPaletteAdd = <ColorPicker id="add-picker" colorNameToHex={ colorNameFunc } pixelClick={ this.addOnlinePixel } />
+      } else if(this.isShowMode()){
+        // add and 
+        colorPalette = <ColorPicker id="user-picker" userColor={ this.state.userColor } colorNameToHex={ colorNameFunc } pixelClick={ this.changeColor } />
+
+        if(this.isMaster()){
+          colorPaletteAdd = <ColorPicker id="add-picker" colorNameToHex={ colorNameFunc } pixelClick={ this.addOnlinePixel } />
+        }
+
+      } else {
+        colorPalette = <ColorPicker id="user-picker" userColor={ this.state.userColor } colorNameToHex={ colorNameFunc } pixelClick={ this.changeColor } />
+      }
+
+
+
     } else {
       // add extra colors offline
       let colors = this.rainbow().map( (color) => <Pixel color={ colorNameFunc(color) } onClick={ () => { this.addPixel(color) } } /> )
@@ -1492,6 +1517,22 @@ class App extends Component {
         </div>
       )
     }
+
+    let colorPaletteClasses = "pixels-container"
+    if(!this.isMaster()){
+      if(this.isGroupMode()){
+        // if grpp and you are user, show big color selector
+        colorPaletteClasses += " big"
+      } else if(this.isShowMode()){
+        colorPaletteClasses += " show"
+      }
+    }
+    let colorPaletteContainer = (
+      <div className={ colorPaletteClasses } >
+        { colorPalette }
+        { colorPaletteAdd }
+      </div>
+    )
 
     let simpleControlClasses = "simple-control"
     let randomizePixelsIntervalControl, numPixControl
@@ -1599,8 +1640,8 @@ class App extends Component {
             { numPixControl }
             { randomizePixelsIntervalControl }
        
-            <SimpleControl changeFunction={ this.changeNoteLength } startHoldDown={ this.startHoldDown } stopHoldDown={ this.stopHoldDown } classes={ simpleControlClasses } fieldName="noteLength" increment={ this.state.coarse ? 0.2 : 0.08 } label="NOTE LENGTH" value={ this.state.noteLength } /> 
-            
+            <SimpleControl changeFunction={ this.changeNoteLength } startHoldDown={ this.startHoldDown } stopHoldDown={ this.stopHoldDown } classes={ simpleControlClasses } fieldName="noteLength" increment={ this.state.coarse ? 0.2 : 0.08 } label="NOTE LENGTH" value={ this.state.noteLength } />
+
             <SimpleControl changeFunction={ this.changeSemitoneShift } startHoldDown={ this.startHoldDown } stopHoldDown={ this.stopHoldDown } classes={ simpleControlClasses } fieldName="semitoneShift" increment={ this.state.coarse ? 1 : 0.01 } label="PITCH" value={ this.state.semitoneShift } /> 
           </span>
         </div>
@@ -1633,18 +1674,8 @@ class App extends Component {
       )
     }
 
-    let colorPaletteClasses = "pixels-container"
     let beatButton, beatColor
     if(this.state.online){
-
-      if(!this.isMaster()){
-        if(this.isGroupMode()){
-          // if grpp and you are user, show big color selector
-          colorPaletteClasses += " big"
-        } else if(this.isShowMode()){
-          colorPaletteClasses += " show"
-        }
-      }
 
       if(this.isBeatMode() && !this.isMaster()){
         // users in beatmode see big button
@@ -1664,9 +1695,7 @@ class App extends Component {
 
         { pixelsContainer }
 
-        <div className={ colorPaletteClasses } >
-          { colorPalette }
-        </div>
+        { colorPaletteContainer }
 
         { userControls }
         

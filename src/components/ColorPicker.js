@@ -8,7 +8,7 @@ function ColorPicker(props){
   let pixels = COLORS.map( (color) => <Pixel key={ color } border={ color == props.userColor } onClick={ () => props.pixelClick(color) } color={ props.colorNameToHex(color) } /> )
 
   return(
-    <div className="color-picker">
+    <div id={ props.id } className="color-picker">
       { pixels }
     </div>
   )

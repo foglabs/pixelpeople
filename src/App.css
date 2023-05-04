@@ -642,6 +642,15 @@ div.knob-container div {
   font-size: 30px;
 }
 
+#add-picker .pixel {
+  outline:  4px solid #00f;
+  outline-offset: -4px;
+}
+
+#user-picker {
+
+}
+
 
 /*  STARTS HERER ERHER EREHR ERH ERHE REHR EHR ERH ERH ERH  */
 /*  STARTS HERER ERHER EREHR ERH ERHE REHR EHR ERH ERH ERH  */
