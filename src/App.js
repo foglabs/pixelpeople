@@ -265,14 +265,34 @@ class App extends Component {
       let data = JSON.parse(message.data)
 
       if(data.ping){
-        console.log( 'sending ping wiht usid', this.state.userID )
+        // console.log( 'sending ping wiht usid', this.state.userID )
         sendDataToServer({userID: this.state.userID, pong: true})
+
+        // ?ButtonReset=PRESS
+        var p = new URL(window.location)
+        if(p.searchParams.get("ButtonReset") == "PRESS"){
+          // tell all to reset and refresh
+          this.resetAll()
+          window.location.href = window.location.hostname
+        } else if(p.searchParams.get("Show") == "SET"){
+          if(this.state.userID){
+            console.log( 'ok, im gonna =do it ',window.location.pathname )
+            // only once we have userid, switch showmode
+            this.toggleShowMode()
+            // get rid of url param
+            window.history.replaceState(null, '', window.location.pathname)
+          }
+          // window.location.href = window.location.hostname
+        }
+
       } else {
+ 
+
         // actual state change
         let localData = {}
         if(!this.state.userID){
           // only update on init
-          console.log( 'changed userid to ' )
+          console.log( 'changed userid to ', data.userID )
           localData.userID = data.userID
           localData.userColor = data.userColor
 
@@ -314,15 +334,19 @@ class App extends Component {
             // start show groupadd mode
 
             this.setState({groupMode: "show", groupMasterID: data.groupMasterID, tempo: data.tempo})
-          } else {
-
             // turn everyones damn volume down
             if(data.groupMasterID !== this.state.userID){
               this.changeMasterGain(0)
             }
+          } else {
+
 
             this.setState({groupMode: false, groupMasterID: false})
             this.changeMasterGain(this.state.masterGain)
+            if(data.resetAll == "MANGO"){
+              console.log( 'Mango!' )
+              window.location.href = window.location.hostname
+            }
           }
         }
 
@@ -386,6 +410,12 @@ class App extends Component {
     localData.randomizePixels = false
     localData.randomizePixelsInterval = 3600
     this.setState(localData)
+  }
+
+  resetAll(){
+    if(this.state.online){
+      sendDataToServer({userID: this.state.userID, resetAll: true})
+    }
   }
 
   restartOnline(){
@@ -1496,7 +1526,7 @@ class App extends Component {
         colorPaletteAdd = <ColorPicker id="add-picker" colorNameToHex={ colorNameFunc } pixelClick={ this.addOnlinePixel } />
       } else if(this.isShowMode()){
         // add and 
-        colorPalette = <ColorPicker id="user-picker" userColor={ this.state.userColor } colorNameToHex={ colorNameFunc } pixelClick={ this.changeColor } />
+        colorPalette = <ColorPicker id={ this.isMaster() ? "master-user-picker" : "user-picker" } userColor={ this.state.userColor } colorNameToHex={ colorNameFunc } pixelClick={ this.changeColor } />
 
         if(this.isMaster()){
           colorPaletteAdd = <ColorPicker id="add-picker" colorNameToHex={ colorNameFunc } pixelClick={ this.addOnlinePixel } />
@@ -1668,7 +1698,7 @@ class App extends Component {
     if(this.isShowMode()){
       // second chance to show during show
       pixelsContainer = (
-        <div className="user-pixels-container graph">
+        <div className="user-pixels-container graph show">
           { pixels }
         </div>
       )

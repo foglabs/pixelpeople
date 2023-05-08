@@ -123,6 +123,12 @@ function stopGroupMode(){
   })
 }
 
+function resetAll(){
+  Object.keys(clients).forEach( (userID) => {
+    sendDataToClient(userID, {resetAll: "MANGO"})
+  })
+}
+
 function changeTempo(changerUserID, newTempo){
   tempo = newTempo
   console.log( `new tempo is ${tempo}`)
@@ -336,8 +342,13 @@ wsServer.on('request', function(request) {
             stopGroupMode()
             changeTempo(64, false)
 
-          }
+          } else if(data.resetAll){
+            console.log( 'this server cares!' )
+            stopGroupMode()
+            changeTempo(64, false)
+            resetAll()
 
+          } 
           // then update everybody with all the colors
           updatePixels()
         }
