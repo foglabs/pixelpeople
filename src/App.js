@@ -851,10 +851,12 @@ class App extends Component {
   }
 
   removePixel(index){
-    if(this.isAddMode() || (this.isMaster() && this.isShowMode()) ){
-      // need to tell server to remove!
-      // userid is required for all msgs from clients
-      sendDataToServer({removeOnlinePixel: index, userID: this.state.userID})
+    if(this.state.online){
+      if(this.isAddMode() || (this.isMaster() && this.isShowMode()) ){
+        // need to tell server to remove!
+        // userid is required for all msgs from clients
+        sendDataToServer({removeOnlinePixel: index, userID: this.state.userID})
+      }
     } else {
       let pixels = [...this.state.pixels]
       pixels.splice( index, 1 )
@@ -863,6 +865,7 @@ class App extends Component {
         this.setColorScheme(this.state.pixels)
       })
     }
+    
   }
 
   pixelsFromColors(colorDatas){
@@ -1472,6 +1475,18 @@ class App extends Component {
     } : null;
   }
 
+  colorBrightness(hex, bright){
+    var r,g,b = this.hexToRgb(hex)
+    r = this.componentBrightness(r, bright)
+    g = this.componentBrightness(g, bright)
+    b = this.componentBrightness(b, bright)
+    return this.rgbToHex(r,g,b)
+  }
+
+  componentBrightness(comp, bright){
+    return comp * bright
+  }
+
   tapBeatButton(){
     if(this.state.online){
 
@@ -1508,7 +1523,7 @@ class App extends Component {
     if(this.state.pixels){
 
       let colorNameFunc = !this.state.darkMode ? this.colorNameToHex : this.colorNameToVeryDarkHex
-      pixels = this.state.pixels.map( (pixel, index) => { return <Pixel onClick={ () => { this.removePixel(index) } } color={ colorNameFunc(pixel.color) } border={ this.state.userID === pixel.userID } fadePixel={ this.isAddMode() || (this.isShowMode() && !pixel.userID) } fadeDuration={ this.fadeDuration(this.state.tempo) } /> })
+      pixels = this.state.pixels.map( (pixel, index) => { return <Pixel onClick={ () => { this.removePixel(index) } } color={ colorNameFunc(pixel.color) } show={ typeof pixel.userID !== undefined } border={ this.state.userID === pixel.userID } fadePixel={ this.isAddMode() || (this.isShowMode() && !pixel.userID) } fadeDuration={ this.fadeDuration(this.state.tempo) } /> })
     }
 
     let colorPalette, colorPaletteAdd
@@ -1518,9 +1533,6 @@ class App extends Component {
 
       // show: for master, adder and changer, for user, just charnger
       
-
-
-
       if(this.isAddMode()){
         // just add
         colorPaletteAdd = <ColorPicker id="add-picker" colorNameToHex={ colorNameFunc } pixelClick={ this.addOnlinePixel } />
@@ -1535,8 +1547,6 @@ class App extends Component {
       } else {
         colorPalette = <ColorPicker id="user-picker" userColor={ this.state.userColor } colorNameToHex={ colorNameFunc } pixelClick={ this.changeColor } />
       }
-
-
 
     } else {
       // add extra colors offline
@@ -1696,9 +1706,14 @@ class App extends Component {
     }
 
     if(this.isShowMode()){
+      let userPixClasses = "user-pixels-container graph show"
+
+      if(this.isMaster()){
+        userPixClasses += " master"
+      }
       // second chance to show during show
       pixelsContainer = (
-        <div className="user-pixels-container graph show">
+        <div className={ userPixClasses }>
           { pixels }
         </div>
       )

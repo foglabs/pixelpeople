@@ -131,7 +131,12 @@ function resetAll(){
 
 function changeTempo(changerUserID, newTempo){
   tempo = newTempo
-  console.log( `new tempo is ${tempo}`)
+  if(tempo){
+    console.log( `new tempo is ${tempo}`)
+  } else {
+    tempo = 64
+    console.log( `defaulting tempo to ${tempo}`)
+  }
   Object.keys(clients).forEach( (userID) => {
     // let these hoes know
     if(changerUserID.userID !== userID){

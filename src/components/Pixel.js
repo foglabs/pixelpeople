@@ -7,11 +7,15 @@ function Pixel(props){
   if(props.border){
     pixelClasses += " border"
     
+  } else if(props.show){
+    pixelClasses += " show"
   } else {
     boxShadow = "0px 0px 4px " + props.color;
   }
 
   let stylez = {backgroundColor: props.color, boxShadow: boxShadow }
+
+  stylez.animationDuration = "0.8s";
   if(props.fadePixel){
 
     stylez.animationName = "fade-animation"
