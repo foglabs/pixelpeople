@@ -234,7 +234,7 @@ wsServer.on('request', function(request) {
   } else if(addModeEnabled){
     sendDataToClient(userID, {groupMode: "add", beatColor: clients[userID].beatColor, tempo: tempo })
   } else if(showModeEnabled){
-    sendDataToClient(userID, {groupMode: "show"})
+    sendDataToClient(userID, {groupMode: "show", tempo: tempo})
   }
 
   // tell the new client who they is and what the pixels are

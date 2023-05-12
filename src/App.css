@@ -366,6 +366,12 @@ div.knob-container div {
   background-color: #000;
 }
 
+/*disabled for now*/
+.soundshower-container.show .sound-show{
+  width: 8vw;
+  height: 8vw;
+}
+
 .sound-show {
   display: inline-block;
   vertical-align: middle;

@@ -87,7 +87,7 @@ class App extends Component {
       holdFactor: 0.5,
 
       darkMode: true,
-      coarse: true,
+      coarse: false,
       optionsMenu: false,
 
     }
@@ -921,7 +921,7 @@ class App extends Component {
       this.setState({tempo: newTempo}, () => {
         seqWorker.postMessage({changeTempo: {value: stepTime} })
 
-        if(this.isAddMode() && !fromServer ){
+        if((this.isAddMode() || this.isShowMode()) && !fromServer ){
           // inform server of tempo changes if addmode, but were not reacting to server
 
           sendDataToServer({userID: this.state.userID, changeTempo: newTempo})
@@ -1508,7 +1508,7 @@ class App extends Component {
       containerClasses += " dark-mode"
     }
 
-    let soundShows
+    let soundShows, soundShowsContainer
     soundShows = this.state.synths.map( (synth, index) => {
       let hexColor
       if(synth.playing){
@@ -1653,8 +1653,7 @@ class App extends Component {
       )
     }
 
-    let userControls, masterSequencer, soundShowsContainer, pixelsContainer, display
-
+    let userControls, masterSequencer, pixelsContainer, display
 
       display = (
         <div className="user-controls-display">
@@ -1687,7 +1686,6 @@ class App extends Component {
         </div>
       )
 
-
       masterSequencer = (
         <MasterSequencer lightStep={ this.state.lightStep } beatColors={ this.state.beatChecks } toggleMasterSequencerStep={ this.toggleMasterSequencerStep } steps={ this.state.masterSequencerSteps } colors={ this.state.masterSequencerColors }  />
       )
@@ -1706,6 +1704,16 @@ class App extends Component {
     }
 
     if(this.isShowMode()){
+      // let soundShowClasses = "soundshower-container"
+      // if(!this.isMaster()){
+      //   soundShowClasses += " show"
+      // }
+      // soundShowsContainer = (
+      //   <div className={ soundShowClasses }>
+      //     { soundShows }
+      //   </div>
+      // )
+
       let userPixClasses = "user-pixels-container graph show"
 
       if(this.isMaster()){
